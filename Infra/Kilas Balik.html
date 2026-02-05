@@ -1,0 +1,169 @@
+<div id="flashback-container">
+    <div id="loading-message">
+        <div class="loader"></div>
+        <p>Sedang membuka mesin waktu... mencari kenangan di tanggal ini.</p>
+    </div>
+    <div id="results-area"></div>
+</div>
+
+<style>
+    /* Desain Container Utama */
+    #flashback-container {
+        font-family: inherit;
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 10px;
+    }
+
+    /* Indikator Loading */
+    #loading-message {
+        text-align: center;
+        padding: 40px;
+        color: #3a3a8c;
+        font-style: italic;
+    }
+    .loader {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3a3a8c; 
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 10px auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* Desain Kartu Postingan */
+    .flashback-post {
+        background: transparent;
+        margin-bottom: 30px;
+        padding-bottom: 30px;
+        border-bottom: 1px solid #ddd;
+        animation: fadeIn 0.5s ease-in;
+    }
+    
+    /* Header Postingan (Tahun & Judul) */
+    .flashback-header {
+        margin-bottom: 15px;
+    }
+    .flashback-year {
+        display: inline-block;
+        background: #3a3a8c;
+        color: #ffffff;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .flashback-title {
+        font-size: 1.5em;
+        margin: 5px 0;
+        line-height: 1.3;
+    }
+    .flashback-title a {
+        text-decoration: none;
+        color: inherit;
+    }
+    .flashback-title a:hover {
+        text-decoration: underline;
+    }
+
+    /* Isi Konten Postingan */
+    .flashback-content {
+        line-height: 1.6;
+        color: inherit;
+    }
+    /* Membatasi gambar agar tidak melebar keluar */
+    .flashback-content img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    /* Animasi Muncul */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<script>
+    const API_KEY = 'key'; 
+    const BLOG_ID = '5360007822337580481'; 
+    const START_YEAR = 2012;
+
+    async function getBloggerFlashback() {
+        const resultsArea = document.getElementById('results-area');
+        const loadingMsg = document.getElementById('loading-message');
+        
+        // Mengatur Waktu (Mengikuti waktu user membuka browser)
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const month = now.getMonth(); // 0-11
+        const day = now.getDate();
+
+        let foundPosts = [];
+        let promises = [];
+
+        // Looping tahun
+        for (let y = START_YEAR; y <= currentYear; y++) {
+            // Membuat format ISO Date untuk start dan end hari tersebut
+            // Handle timezone,dengan Local time user -> ISO
+            let startDate = new Date(y, month, day, 0, 0, 0).toISOString();
+            let endDate = new Date(y, month, day, 23, 59, 59).toISOString();
+
+            const url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts?key=${API_KEY}&startDate=${startDate}&endDate=${endDate}&fetchBodies=true`;
+
+            // Simpan request ke dalam antrian (Promise)
+            promises.push(
+                fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.items) {
+                        data.items.forEach(post => {
+                            foundPosts.push(post);
+                        });
+                    }
+                })
+                .catch(err => console.log("Gagal mengambil tahun " + y, err))
+            );
+        }
+
+        // Jalankan semua request secara bersamaan
+        await Promise.all(promises);
+
+        // Sembunyikan loading
+        loadingMsg.style.display = 'none';
+
+        // Urutkan postingan berdasarkan tanggal (terlama ke terbaru)
+        foundPosts.sort((a, b) => new Date(a.published) - new Date(b.published));
+
+        if (foundPosts.length === 0) {
+            resultsArea.innerHTML = `<p style="text-align:center;">Tidak ada postingan ditemukan pada tanggal ini di tahun-tahun sebelumnya.</p>`;
+        } else {
+            // Render HTML untuk setiap postingan
+            foundPosts.forEach(post => {
+                const dateObj = new Date(post.published);
+                const yearStr = dateObj.getFullYear();
+                
+                // Membuat elemen HTML
+                const postDiv = document.createElement('div');
+                postDiv.className = 'flashback-post';
+                
+                postDiv.innerHTML = `
+                    <div class="flashback-header">
+                        <span class="flashback-year">Tahun ${yearStr}</span>
+                        <h3 class="flashback-title"><a href="${post.url}" target="_blank">${post.title}</a></h3>
+                    </div>
+                    <div class="flashback-content">
+                        ${post.content} 
+                    </div>
+                `;
+                resultsArea.appendChild(postDiv);
+            });
+        }
+    }
+
+    // Jalankan fungsi saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', getBloggerFlashback);
+</script>
