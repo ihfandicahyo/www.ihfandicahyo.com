@@ -1,0 +1,230 @@
+<div class='tree-archive-container'>
+  <h2 class='tree-archive-title'>ARSIP POSTINGAN</h2>
+  <div id='tree-archive-root'>
+    <div class='tree-load-status'>
+      <div class='tree-spinner'></div>
+      <p>Menghubungkan ke server...</p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .tree-archive-container {
+    font-family: var(--fontBody), sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .tree-archive-title {
+    text-align: center;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 1.6rem;
+    margin-bottom: 40px;
+    letter-spacing: 2px;
+  }
+  .tree-load-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 50px 0;
+    color: var(--themeC-alt);
+  }
+  .tree-spinner {
+    width: 35px;
+    height: 35px;
+    border: 3.5px solid var(--themeBg-sec);
+    border-top: 3.5px solid var(--themeLink);
+    border-radius: 50%;
+    animation: treeSpin 0.8s linear infinite;
+    margin-bottom: 15px;
+  }
+  @keyframes treeSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .tree-group {
+    margin: 10px 0;
+    padding-left: 20px;
+    position: relative;
+  }
+  .tree-group::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: var(--themeBd-color);
+  }
+  details summary {
+    list-style: none;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+  }
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+  .tree-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: var(--contentBd-radius);
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 5px;
+    transition: all 0.2s ease;
+    user-select: none;
+    border: none;
+    color: #ffffff;
+  }
+  .tree-btn::after {
+    content: '\276F';
+    font-size: 10px;
+    margin-left: 10px;
+    transition: transform 0.2s;
+    opacity: 0.8;
+  }
+  details[open] > summary .tree-btn::after {
+    transform: rotate(90deg);
+  }
+  /* Warna Kotak Selaras */
+  .tag-year {
+    background-color: var(--buttonBg);
+    color: var(--buttonC);
+    text-transform: uppercase;
+  }
+  .tag-month {
+    background-color: var(--themeLink);
+    font-size: 13px;
+  }
+  .tag-day {
+    background-color: var(--themeLink);
+    font-size: 12px;
+    opacity: 0.85;
+  }
+  .tree-list {
+    list-style: none;
+    padding: 8px 0 8px 25px;
+    margin: 0;
+  }
+  .tree-post {
+    margin: 6px 0;
+    position: relative;
+  }
+  .tree-post::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 12px;
+    width: 15px;
+    height: 1px;
+    background: var(--themeBd-color);
+  }
+  .tree-post a {
+    color: var(--themeC);
+    font-size: 14px;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    transition: 0.2s;
+  }
+  .tree-post a:hover {
+    color: var(--themeLink);
+    background: var(--themeBg-alt);
+    transform: translateX(3px);
+  }
+  .tree-error {
+    color: var(--warnC);
+    background: var(--warnBg);
+    padding: 15px;
+    border-radius: var(--contentBd-radius);
+    text-align: center;
+  }
+</style>
+
+<script>
+(function() {
+  const CONFIG = {
+    key: 'XXXX',
+    blogId: 'XXXX',
+    months: ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"]
+  };
+
+  async function loadArchive() {
+    const root = document.getElementById('tree-archive-root');
+    let posts = [];
+    let token = null;
+
+    try {
+      do {
+        let url = `https://www.googleapis.com/blogger/v3/blogs/${CONFIG.blogId}/posts?key=${CONFIG.key}&maxResults=500&fields=items(title,url,published),nextPageToken`;
+        if (token) url += `&pageToken=${token}`;
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Koneksi API Gagal');
+        
+        const data = await res.json();
+        if (data.items) posts = posts.concat(data.items);
+        token = data.nextPageToken || null;
+      } while (token);
+
+      render(posts);
+    } catch (e) {
+      root.innerHTML = `<div class="tree-error">Gagal memuat: ${e.message}</div>`;
+    }
+  }
+
+  function render(posts) {
+    const root = document.getElementById('tree-archive-root');
+    root.innerHTML = '';
+    const tree = {};
+
+    posts.forEach(p => {
+      const dt = new Date(p.published);
+      const y = dt.getFullYear(), m = dt.getMonth(), d = dt.getDate();
+      if (!tree[y]) tree[y] = {};
+      if (!tree[y][m]) tree[y][m] = {};
+      if (!tree[y][m][d]) tree[y][m][d] = [];
+      tree[y][m][d].push(p);
+    });
+
+    Object.keys(tree).sort((a,b) => b-a).forEach(y => {
+      const yDet = document.createElement('details');
+      yDet.className = 'tree-group';
+      yDet.innerHTML = `<summary><span class='tree-btn tag-year'>${y}</span></summary>`;
+      
+      Object.keys(tree[y]).sort((a,b) => b-a).forEach(m => {
+        const mDet = document.createElement('details');
+        mDet.className = 'tree-group';
+        mDet.innerHTML = `<summary><span class='tree-btn tag-month'>${CONFIG.months[m]}</span></summary>`;
+
+        Object.keys(tree[y][m]).sort((a,b) => b-a).forEach(d => {
+          const dDet = document.createElement('details');
+          dDet.className = 'tree-group';
+          dDet.innerHTML = `<summary><span class='tree-btn tag-day'>${d} ${CONFIG.months[m].substring(0,3)}</span></summary>`;
+
+          const pUl = document.createElement('ul');
+          pUl.className = 'tree-list';
+          
+          tree[y][m][d].sort((a,b) => new Date(b.published) - new Date(a.published)).forEach(post => {
+            const li = document.createElement('li');
+            li.className = 'tree-post';
+            li.innerHTML = `<a href="${post.url}">${post.title}</a>`;
+            pUl.appendChild(li);
+          });
+
+          dDet.appendChild(pUl);
+          mDet.appendChild(dDet);
+        });
+        yDet.appendChild(mDet);
+      });
+      root.appendChild(yDet);
+    });
+  }
+
+  window.addEventListener('load', loadArchive);
+})();
+</script>
