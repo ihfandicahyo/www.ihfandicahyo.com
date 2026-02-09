@@ -1,0 +1,231 @@
+<div id="translator-wrapper" class="translator-widget">
+    <div id="translator-panel" class="translator-popup">
+        <div class="popup-header">
+            <span class="popup-title">Pilih Bahasa</span>
+            <span class="popup-close" onclick="document.getElementById('translator-wrapper').classList.remove('active')">&times;</span>
+        </div>
+        
+        <div id="lang-loading" style="font-size:12px; opacity:0.7; padding:15px; text-align:center;">
+            <div class="spinner"></div> Menyiapkan...
+        </div>
+
+        <ul id="custom-lang-list" class="custom-lang-list"></ul>
+
+        <div id="google_translate_element" style="display:none !important;"></div> 
+    </div>
+
+    <div id="translator-btn" class="translator-btn" title="Ganti Bahasa">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+    </div>
+</div>
+
+<style>
+    iframe#\:1\.container, 
+    iframe.goog-te-banner-frame, 
+    .goog-te-banner-frame, 
+    #goog-gt-tt, 
+    .goog-te-balloon-frame { 
+        display: none !important; 
+        visibility: hidden !important; 
+        opacity: 0 !important; 
+    }
+
+    html, body { 
+        top: 0px !important; 
+        margin-top: 0px !important; 
+        position: relative !important;
+    }
+
+    .goog-text-highlight { 
+        background: transparent !important; 
+        box-shadow: none !important; 
+    }
+
+    .translator-widget {
+        position: fixed; 
+        bottom: 100px;
+        right: 30px; 
+        z-index: 2147483647 !important; 
+        display: flex; flex-direction: column; align-items: flex-end;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        pointer-events: none;
+    }
+
+    .translator-btn {
+        width: 55px; height: 55px;
+        background: linear-gradient(135deg, #9F8BFF 0%, #7B61FF 100%);
+        border-radius: 50%;
+        box-shadow: 0 4px 15px rgba(123, 97, 255, 0.4);
+        display: flex; align-items: center; justify-content: center;
+        cursor: grab; transition: transform 0.2s;
+        touch-action: none;
+        pointer-events: auto;
+    }
+
+    .translator-popup {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        color: inherit;
+        width: 240px; max-height: 280px; border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        margin-bottom: 15px; opacity: 0; visibility: hidden;
+        transform: translateY(10px) scale(0.95);
+        transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+        transform-origin: bottom right; overflow: hidden;
+        pointer-events: auto;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .translator-popup { border: 1px solid rgba(255,255,255,0.1); }
+    }
+    
+    .translator-widget.active .translator-popup { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+    .popup-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+    .popup-title { font-size: 11px; font-weight: 800; opacity: 0.8; letter-spacing: 1px; }
+    .popup-close { font-size: 20px; cursor: pointer; opacity: 0.5; }
+    .custom-lang-list { list-style: none; margin: 0; padding: 5px; overflow-y: auto; max-height: 300px; }
+    .lang-item { padding: 10px 15px; cursor: pointer; border-radius: 8px; transition: 0.2s; font-size: 14px; font-weight: 500; }
+    .lang-item:hover { background: rgba(255, 255, 255, 0.2); }
+    .lang-item.active-lang { background: rgba(255, 255, 255, 0.3); font-weight: bold; }
+    .spinner { display: inline-block; width: 10px; height: 10px; border: 2px solid rgba(136,117,245,0.3); border-radius: 50%; border-top-color: #8875F5; animation: spin 1s infinite linear; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
+
+<script type="text/javascript">
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement({ pageLanguage: 'auto' }, 'google_translate_element');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const widget = document.getElementById('translator-wrapper');
+        const btn = document.getElementById('translator-btn');
+        const customList = document.getElementById('custom-lang-list');
+        const loadingMsg = document.getElementById('lang-loading');
+
+        const savedPos = localStorage.getItem('trans_widget_pos');
+        if (savedPos) {
+            const pos = JSON.parse(savedPos);
+            widget.style.right = 'auto';
+            widget.style.bottom = 'auto';
+            widget.style.left = pos.left;
+            widget.style.top = pos.top;
+        }
+
+        const cleanUI = () => {
+            const banner = document.querySelector('.goog-te-banner-frame') || document.getElementById(':1.container');
+            if (banner) banner.style.setProperty('display', 'none', 'important');
+            if (document.body.style.top !== '0px') {
+                document.body.style.setProperty('top', '0px', 'important');
+                document.documentElement.style.setProperty('top', '0px', 'important');
+            }
+        };
+
+        window.addEventListener('scroll', () => {
+            if (document.body.style.top !== '0px') cleanUI();
+        }, { passive: true });
+
+        const observer = new MutationObserver(cleanUI);
+        observer.observe(document.body, { attributes: true, attributeFilter: ['style'] });
+
+        function clearCookies() {
+            const domain = window.location.hostname;
+            const parts = domain.split('.');
+            const root = parts.length > 2 ? parts.slice(-2).join('.') : domain;
+            const domains = [domain, `.${domain}`, `.${root}`];
+            
+            domains.forEach(d => {
+                document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${d}`;
+            });
+            document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        }
+
+        function setLang(code) {
+            clearCookies();
+            if (code !== 'reset') {
+                const val = `/auto/${code}`;
+                document.cookie = `googtrans=${val}; path=/`;
+                document.cookie = `googtrans=${val}; path=/; domain=${window.location.hostname}`;
+            }
+            setTimeout(() => window.location.reload(), 100);
+        }
+
+        let attempts = 0;
+        let checkExist = setInterval(() => {
+            const select = document.querySelector('.goog-te-combo');
+            attempts++;
+            if (select && select.options.length > 1) {
+                clearInterval(checkExist);
+                loadingMsg.style.display = 'none';
+                
+                const current = document.cookie.split('; ').find(r => r.startsWith('googtrans='));
+                const active = current ? current.split('/').pop() : '';
+
+                let html = `<li class="lang-item ${!active ? 'active-lang' : ''}" data-code="reset">Bahasa Asli</li>`;
+                Array.from(select.options).forEach(opt => {
+                    if (opt.value) {
+                        html += `<li class="lang-item ${active === opt.value ? 'active-lang' : ''}" data-code="${opt.value}">${opt.text}</li>`;
+                    }
+                });
+                customList.innerHTML = html;
+
+                customList.addEventListener('click', (e) => {
+                    const el = e.target.closest('.lang-item');
+                    if (el) {
+                        el.innerHTML = '<div class="spinner"></div>...';
+                        setLang(el.dataset.code);
+                    }
+                });
+            }
+            if (attempts > 50) clearInterval(checkExist);
+        }, 300);
+
+        let isDrag = false, move = false, offset = {x:0, y:0};
+
+        const start = (e) => {
+            isDrag = true; move = false;
+            const cx = e.clientX || e.touches[0].clientX;
+            const cy = e.clientY || e.touches[0].clientY;
+            const r = widget.getBoundingClientRect();
+            offset = { x: cx - r.left, y: cy - r.top };
+        };
+
+        const dragging = (e) => {
+            if (!isDrag) return;
+            move = true;
+            const cx = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+            const cy = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+            
+            widget.style.right = 'auto'; widget.style.bottom = 'auto';
+            widget.style.left = `${cx - offset.x}px`;
+            widget.style.top = `${cy - offset.y}px`;
+        };
+
+        const endDrag = () => {
+            if (isDrag && move) {
+                localStorage.setItem('trans_widget_pos', JSON.stringify({
+                    left: widget.style.left,
+                    top: widget.style.top
+                }));
+            }
+            isDrag = false;
+        };
+
+        btn.addEventListener('mousedown', start);
+        btn.addEventListener('touchstart', start, {passive: true});
+        
+        window.addEventListener('mousemove', dragging);
+        window.addEventListener('touchmove', dragging, {passive: false});
+        
+        window.addEventListener('mouseup', endDrag);
+        window.addEventListener('touchend', endDrag);
+
+        btn.addEventListener('click', () => { if (!move) widget.classList.toggle('active'); });
+    });
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
