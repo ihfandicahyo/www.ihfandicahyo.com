@@ -1,0 +1,159 @@
+<div class='pinned-posts-container'>
+  <div id='pinned-posts-root' class='pinned-posts-grid'>
+    <div class='pinned-loader'></div>
+  </div>
+</div>
+
+<style>
+  .pinned-posts-container {
+    font-family: var(--fontBody), sans-serif;
+    padding: 20px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  /* Grid otomatis: akan turun ke bawah jika lebih dari 3 */
+  .pinned-posts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+  }
+  .pinned-item {
+    background: var(--themeBg);
+    border: 1px solid var(--themeBd-color);
+    border-radius: var(--postBd-radius);
+    padding: var(--postPadding);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .pinned-item:hover {
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15);
+    border-color: var(--themeLink);
+  }
+  .pinned-thumb-link {
+    display: block;
+    width: 100%;
+    margin-bottom: 15px;
+    overflow: hidden;
+    border-radius: var(--contentBd-radius);
+    aspect-ratio: 16/9;
+    background-color: var(--themeBg-alt);
+  }
+  .pinned-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.5s ease;
+  }
+  .pinned-item:hover .pinned-thumb {
+    transform: scale(1.08);
+  }
+  .pinned-title {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.4;
+    font-family: var(--fontBody-alt);
+    font-weight: 600;
+  }
+  .pinned-title a {
+    color: var(--themeC);
+    text-decoration: none;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .pinned-title a:hover {
+    color: var(--themeLink);
+  }
+  .pinned-loader {
+    grid-column: 1 / -1;
+    width: 40px;
+    height: 40px;
+    margin: 40px auto;
+    border: 4px solid var(--themeBg-sec);
+    border-top: 4px solid var(--themeLink);
+    border-radius: 50%;
+    animation: pinSpin 0.8s linear infinite;
+  }
+  @keyframes pinSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  /* Responsif: 2 kolom di tablet, 1 kolom di HP */
+  @media screen and (max-width: 896px) {
+    .pinned-posts-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media screen and (max-width: 500px) {
+    .pinned-posts-grid { grid-template-columns: 1fr; }
+  }
+</style>
+
+<script>
+(function() {
+  const API_KEY = 'XXXX';
+  const BLOG_ID = 'XXXX';
+  
+  // Postingan URL di bawah
+  const POST_URLS = [
+    'https://www.ihfandicahyo.com/2025/11/luruh.html',
+    'https://www.ihfandicahyo.com/2025/11/nona-malam.html',
+    'https://www.ihfandicahyo.com/2025/06/rembulan.html',
+    'https://www.ihfandicahyo.com/2025/11/cinta-kata-kuncinya.html'
+  ];
+
+  function extractImage(content) {
+    const div = document.createElement('div');
+    div.innerHTML = content;
+    const img = div.querySelector('img');
+    return img ? img.src : null;
+  }
+
+  async function fetchPostData(url) {
+    try {
+      const path = new URL(url).pathname;
+      const apiUrl = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/bypath?path=${path}&key=${API_KEY}`;
+      const res = await fetch(apiUrl);
+      return await res.json();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  async function initPinned() {
+    const root = document.getElementById('pinned-posts-root');
+    if (!root) return;
+
+    const results = await Promise.all(POST_URLS.map(url => fetchPostData(url)));
+    
+    root.innerHTML = '';
+    results.forEach(post => {
+      if (post && post.title) {
+        let imgUrl = post.images ? post.images[0].url : extractImage(post.content);
+        if (!imgUrl) imgUrl = 'data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+        imgUrl = imgUrl.replace(/\/s\d+(-c)?\//, '/s600-c/');
+
+        const card = document.createElement('div');
+        card.className = 'pinned-item';
+        card.innerHTML = `
+          <a href="${post.url}" class="pinned-thumb-link">
+            <img class="pinned-thumb" src="${imgUrl}" alt="${post.title}"/>
+          </a>
+          <h3 class="pinned-title">
+            <a href="${post.url}">${post.title}</a>
+          </h3>
+        `;
+        root.appendChild(card);
+      }
+    });
+  }
+
+  if (document.readyState === 'complete') {
+    initPinned();
+  } else {
+    window.addEventListener('load', initPinned);
+  }
+})();
+</script>
