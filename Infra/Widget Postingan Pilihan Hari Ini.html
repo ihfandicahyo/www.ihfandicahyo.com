@@ -33,7 +33,7 @@
     <div class="rp-header">Postingan Pilihan Hari Ini</div>
     <a id="rp-content" href="#">
       <div class="rp-img-frame">
-        <img id="rp-image" src="" alt="Thumbnail">
+        <img id="rp-image" src="" alt="Thumbnail" />
       </div>
       <div class="rp-info">
         <h3 id="rp-title">Memuat...</h3>
@@ -53,8 +53,8 @@
     return;
   }
 
-  const API_KEY = 'XXXX';
-  const BLOG_ID = 'XXXX';
+  const API_KEY = 'AIzaSyDPliBpzAnGEJhxNuhVdHIG7iri3ga4_0E';
+  const BLOG_ID = '5360007822337580481';
   
   async function fetchRandomPost() {
     try {
@@ -74,7 +74,7 @@
         document.getElementById('rp-title').innerText = post.title;
         document.getElementById('rp-content').href = post.url;
         document.getElementById('rp-date').innerText = new Date(post.published).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-        document.getElementById('rp-image').src = post.images ? post.images[0].url.replace(/\/s\d+\//, '/s200/') : 'https://placehold.co/200x200/8875F5/ffffff?text=No+Image';
+        document.getElementById('rp-image').src = post.images ? post.images[0].url.replace(/\/s\d+\//, '/s200/') : 'https://placehold.co/200x200/8875F5/ffffff?text=Gambar+Kosong';
         document.getElementById('random-post-daily').style.display = 'block';
       }
     } catch (e) {
