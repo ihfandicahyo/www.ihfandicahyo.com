@@ -1,18 +1,18 @@
 <style>
-  /* Bingkai Utama */
+  /* Bingkai Utama berbasis MedianUI */
   #random-post-daily {
     display: none;
     margin: 20px 0;
     padding: 15px;
     background: var(--content-bg);
     border: 1px solid var(--border-color);
-    border-radius: 10px;
+    border-radius: 12px;
     position: relative;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     animation: fadeInUp 0.6s ease-out forwards;
   }
 
-  /* Ornamen Sudut */
+  /* Ornamen Sudut Gaya Bali */
   .rp-ornament {
     position: absolute;
     width: 45px;
@@ -25,7 +25,7 @@
   .orn-tl { top: -1px; left: -1px; }
   .orn-br { bottom: -1px; right: -1px; transform: rotate(180deg); }
 
-  /* Garis Tipis Interior */
+  /* Garis Dekorasi Interior */
   #random-post-daily::before {
     content: '';
     position: absolute;
@@ -33,7 +33,7 @@
     border: 1px solid #8875F5;
     opacity: 0.15;
     pointer-events: none;
-    border-radius: 6px;
+    border-radius: 8px;
   }
 
   @keyframes fadeInUp {
@@ -43,20 +43,21 @@
 
   .rp-inner { position: relative; z-index: 3; }
   .rp-header {
-    font-size: 10.5px;
+    font-size: 10px;
     font-weight: 700;
     color: #8875F5;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 2px;
     text-align: center;
     margin-bottom: 12px;
   }
 
-  #rp-content { display: flex; gap: 15px; text-decoration: none; align-items: center; }
+  #rp-content { display: flex; gap: 15px; text-decoration: none; align-items: center; color: var(--text-color); }
   
+  /* Frame Gambar Latar Belakang */
   .rp-img-frame {
-    width: 70px;
-    height: 70px;
+    width: 75px;
+    height: 75px;
     border-radius: 8px;
     overflow: hidden;
     flex-shrink: 0;
@@ -79,7 +80,7 @@
     color: var(--text-color);
   }
   #rp-content:hover #rp-title { color: #8875F5; }
-  #rp-date { font-size: 11px; color: var(--text-color); opacity: 0.5; }
+  #rp-date { font-size: 11px; opacity: 0.5; color: var(--text-color); }
 </style>
 
 <div id="random-post-daily">
@@ -87,7 +88,7 @@
   <svg class="rp-ornament orn-br" viewbox="0 0 100 100"><path d="M0 0v100c0-55.2 44.8-100 100-100H0zm20 20c0 33.1 26.9 60 60 60V20H20z" opacity=".2"/><path d="M5 5v40c0-19.3 15.7-35 35-35H5zm10 10c0 11 9 20 20 20V15H15z"/></path></path></svg>
   
   <div class="rp-inner">
-    <div class="rp-header">Postingan Pilihan</div>
+    <div class="rp-header">Postingan Pilihan Hari Ini</div>
     <a id="rp-content" href="#">
       <div class="rp-img-frame">
         <img id="rp-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Thumbnail" />
@@ -105,49 +106,42 @@
   const isHomepage = window.location.pathname === '/' || window.location.pathname === '/index.html' || window.location.pathname === '';
   if (!isHomepage) return;
 
-  const API_KEY = 'AIzaSyDPliBpzAnGEJhxNuhVdHIG7iri3ga4_0E';
-  const BLOG_ID = '5360007822337580481';
-
-  function getImg(post) {
-    let src = 'https://placehold.co/200x200/8875F5/ffffff?text=Arsip';
-    if (post.images && post.images.length > 0) {
-      src = post.images[0].url;
-    } else {
-      const match = /<img.*?src=["'](.*?)["']/.exec(post.content);
-      if (match && match[1]) src = match[1];
-    }
-    return src.replace(/\/s\d+(-c)?\//, '/s200/').replace(/=s\d+(-c)?/, '=s200');
-  }
-
-  async function fetchArchive() {
+  async function fetchRandomPost() {
     try {
-      // Rentang waktu aman: 2012 - 2026
-      const start = new Date('2012-01-01T00:00:00Z').getTime();
-      const end = new Date('2026-12-31T23:59:59Z').getTime();
-      const randomTime = start + (Math.random() * (end - start));
-      const rDate = new Date(randomTime).toISOString();
+      // Ambil total jumlah postingan
+      const resTotal = await fetch(`/feeds/posts/summary?alt=json&max-results=0`);
+      const dataTotal = await resTotal.json();
+      const totalPosts = parseInt(dataTotal.feed.openSearch$totalResults.$t);
 
-      const url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts?key=${API_KEY}&maxResults=50&publishedBefore=${rDate}&fields=items(title,url,published,images,content)`;
+      // Hanya berganti sekali sehari
+      const today = new Date();
+      const seed = today.getFullYear() * 1000 + (today.getMonth() + 1) * 100 + today.getDate();
+      const pseudoRandom = (Math.abs(Math.sin(seed) * 10000) % 1);
       
-      const res = await fetch(url);
-      const data = await res.json();
+      // Ambil indeks acak 
+      const safeTotal = totalPosts > 10 ? totalPosts - 5 : totalPosts; 
+      const randomIndex = Math.floor(pseudoRandom * safeTotal) + 1;
 
-      let post;
-      if (data.items && data.items.length > 0) {
-        post = data.items[Math.floor(Math.random() * data.items.length)];
-      } else {
-        // Fallback ke 2026 jika pencarian random kosong
-        const fbUrl = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts?key=${API_KEY}&maxResults=10&publishedBefore=2026-12-31T23:59:59Z`;
-        const fbRes = await fetch(fbUrl);
-        const fbData = await fbRes.json();
-        post = fbData.items[Math.floor(Math.random() * fbData.items.length)];
-      }
+      // Ambil satu postingan berdasarkan nomor urut (start-index)
+      const resPost = await fetch(`/feeds/posts/summary?alt=json&start-index=${randomIndex}&max-results=1`);
+      const dataPost = await resPost.json();
+      
+      if (dataPost.feed.entry && dataPost.feed.entry.length > 0) {
+        const entry = dataPost.feed.entry[0];
+        const title = entry.title.$t;
+        const url = entry.link.find(l => l.rel === 'alternate').href;
+        const date = new Date(entry.published.$t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        // Deteksi Gambar (Otomatis ke s200 agar tajam)
+        let imgUrl = 'https://placehold.co/200x200/8875F5/ffffff?text=Arsip';
+        if (entry.media$thumbnail) {
+          imgUrl = entry.media$thumbnail.url.replace(/\/s72\-c/, "/s200");
+        }
 
-      if (post) {
-        document.getElementById('rp-title').innerText = post.title;
-        document.getElementById('rp-content').href = post.url;
-        document.getElementById('rp-date').innerText = new Date(post.published).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-        document.getElementById('rp-image').src = getImg(post);
+        document.getElementById('rp-title').innerText = title;
+        document.getElementById('rp-content').href = url;
+        document.getElementById('rp-date').innerText = date;
+        document.getElementById('rp-image').src = imgUrl;
         document.getElementById('random-post-daily').style.display = 'block';
       }
     } catch (e) {
@@ -155,6 +149,6 @@
     }
   }
 
-  fetchArchive();
+  fetchRandomPost();
 })();
 </script>
