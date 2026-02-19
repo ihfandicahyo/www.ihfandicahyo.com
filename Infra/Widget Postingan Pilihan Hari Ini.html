@@ -133,7 +133,7 @@
         const date = new Date(entry.published.$t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
         
         // Deteksi Gambar (Otomatis ke s200 agar tajam)
-        let imgUrl = 'https://placehold.co/200x200/8875F5/ffffff?text=Arsip';
+        let imgUrl = 'https://placehold.co/200x200/8875F5/ffffff?text=>_<';
         if (entry.media$thumbnail) {
           imgUrl = entry.media$thumbnail.url.replace(/\/s72\-c/, "/s200");
         }
