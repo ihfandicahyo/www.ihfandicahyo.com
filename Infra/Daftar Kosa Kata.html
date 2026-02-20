@@ -26,10 +26,31 @@
     margin-bottom: 1rem;
     opacity: 0.8;
   }
+
+  /* Banner Total Kata */
+  .voc-total-banner {
+    background-color: rgba(136, 117, 245, 0.15);
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #8875F5;
+    font-size: 1.05rem;
+  }
+
+  /* Header Kolom (No, Kata, Jumlah) */
+  .voc-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 2px solid var(--border-color, rgba(128, 128, 128, 0.3));
+    font-weight: 700;
+    color: var(--title-color, inherit);
+    margin-bottom: 5px;
+  }
   
   .voc-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     padding: 10px;
     border-bottom: 1px solid var(--border-color, rgba(128, 128, 128, 0.15));
@@ -40,6 +61,17 @@
     background-color: rgba(136, 117, 245, 0.08);
     border-radius: 8px;
   }
+
+  /* Mengatur lebar masing-masing kolom agar sejajar */
+  .voc-col-no {
+    width: 70px;
+    font-weight: 600;
+    opacity: 0.8;
+  }
+
+  .voc-col-word {
+    flex: 1;
+  }
   
   .voc-word-link { 
     color: var(--text-color, inherit) !important; 
@@ -49,19 +81,19 @@
     transition: color 0.2s ease;
   }
 
-  /* Saat teks kosa kata disorot kursor */
   .voc-word-link:hover {
-    color: #8875F5 !important; /* Berubah jadi ungu */
-    text-decoration: underline; /* Muncul garis bawah */
+    color: #8875F5 !important;
+    text-decoration: underline;
   }
   
   .voc-count { 
     color: #8875F5 !important; 
     font-weight: 700; 
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     background-color: rgba(136, 117, 245, 0.1);
-    padding: 3px 10px;
+    padding: 4px 10px;
     border-radius: 12px;
+    text-align: right;
   }
   
   .voc-hidden { display: none !important; }
@@ -86,6 +118,14 @@
 
   <div class="voc-hidden" id="voc-result-area">
     <h3 class="voc-title">Daftar Kosa Kata</h3>
+    <div id="voc-total-area"></div> 
+    
+    <div class="voc-header">
+      <div class="voc-col-no">No</div>
+      <div class="voc-col-word">Kata</div>
+      <div>Jumlah</div>
+    </div>
+
     <div id="voc-output"></div>
   </div>
 </div>
@@ -142,23 +182,42 @@
   }
 
   function finalize() {
+    // Menghitung Total Semua Kata
+    let totalAllWords = 0;
+    for (let word in allWordsMap) {
+      totalAllWords += allWordsMap[word];
+    }
+
+    // Mengurutkan dan mengambil 8000 teratas
     const sorted = Object.entries(allWordsMap)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 8000); 
+      .slice(0, 10000); 
 
     const output = document.getElementById('voc-output');
+    const totalArea = document.getElementById('voc-total-area');
     
     if(sorted.length > 0) {
-      // Variabel $word
-      output.innerHTML = sorted.map(([word, count]) => `
+      // Menampilkan Total Kata dengan format angka Indonesia (misal: 15.000)
+      totalArea.innerHTML = `
+        <div class="voc-total-banner">
+          <strong>Total Keseluruhan Kata:</strong> ${totalAllWords.toLocaleString('id-ID')}
+        </div>
+      `;
+
+      // Menambahkan parameter 'index' pada map() untuk penomoran
+      output.innerHTML = sorted.map(([word, count], index) => `
         <div class="voc-item">
-          <a href="https://www.ihfandicahyo.com/search?q=${word}&m=1" target="_blank" class="voc-word-link" title="Cari kata '${word}' di blog">
-            ${word}
-          </a>
-          <span class="voc-count">${count} Kali</span>
+          <div class="voc-col-no">${index + 1}.</div>
+          <div class="voc-col-word">
+            <a href="https://www.ihfandicahyo.com/search?q=${word}&m=1" target="_blank" class="voc-word-link" title="Cari kata '${word}' di blog">
+              ${word}
+            </a>
+          </div>
+          <div class="voc-count">${count.toLocaleString('id-ID')} Kali</div>
         </div>
       `).join('');
     } else {
+      totalArea.innerHTML = "";
       output.innerHTML = "<div style='text-align:center;'>Tidak ada kosa kata yang ditemukan.</div>";
     }
 
