@@ -188,7 +188,7 @@
       totalAllWords += allWordsMap[word];
     }
 
-    // Mengurutkan dan mengambil 8000 teratas
+    // Mengurutkan dan mengambil 10000 teratas
     const sorted = Object.entries(allWordsMap)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10000); 
