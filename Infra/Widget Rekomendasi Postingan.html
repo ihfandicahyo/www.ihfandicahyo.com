@@ -1,259 +1,305 @@
-<div id="median-related-wrapper" style="display:none">
-  <div class="median-related-box">
-    <div class="mr-header">
-      <h3 class="mr-title">Mungkin Kamu Suka</h3>
-      <a href="/search" class="mr-more">Lihat Lainnya</a>
+<div id="geek-related-wrapper" style="display:none; width:100%; box-sizing:border-box;">
+  <div class="geek-related-box">
+    <div class="geek-header">
+      <h3 class="geek-title">Baca Juga</h3>
+      <a href="/search" class="geek-more">Arsip Blog &rarr;</a>
     </div>
     
-    <div id="mr-content" class="mr-grid">
-      <div class="mr-loading"></div><div class="mr-loading"></div>
+    <div id="geek-content" class="geek-container">
+      <div class="geek-card skeleton"></div>
+      <div class="geek-card skeleton"></div>
     </div>
   </div>
 </div>
 
 <style>
-/* --- Dukungan Untuk MedianUI --- */
-.median-related-box {
-  margin: 20px 0 30px;
+/* --- Dukungan Untuk MedianUI (tulis ulang) --- */
+.geek-related-box {
+  margin: 30px 0;
   display: block;
   font-family: var(--fontBody, sans-serif);
+  width: 100%;
+  clear: both;
 }
 
-.mr-header {
+/* Gaya Judul */
+.geek-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--contentBg-alt, #f0f0f0);
   padding-bottom: 10px;
-  border-bottom: 1px solid var(--contentBd-color, #eee);
 }
-
-.mr-title {
+.geek-title {
   font-size: 1.1rem;
   font-weight: 700;
   margin: 0;
   color: var(--themeC, #333);
   position: relative;
 }
-
-.mr-title::before {
+.geek-title::after {
   content: '';
   position: absolute;
-  bottom: -11px;
+  bottom: -12px;
   left: 0;
-  width: 50px;
+  width: 40px;
   height: 2px;
   background: var(--themeLink, #8875f5);
-  border-radius: 2px;
 }
-
-.mr-more {
-  font-size: 0.85rem;
+.geek-more {
+  font-size: 0.8rem;
   color: var(--themeLink, #8875f5);
   text-decoration: none;
   font-weight: 600;
 }
 
-/* --- Tata Letak Kolom Tampilan --- */
-.mr-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+/* Container Flexbox */
+.geek-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px; 
+  margin: 0 -5px;
 }
 
-/* Tablet & Desktop 3 kotak */
-@media (min-width: 600px) {
-  .mr-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-  }
-}
-
-/* --- Gaya Kartu --- */
-.mr-card {
+/* Gaya Kartu */
+.geek-card {
+  /* Mobile: 2 Kolom (50% - gap) */
+  width: calc(50% - 10px); 
   display: flex;
   flex-direction: column;
   background: var(--contentBg, #fff);
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
-  text-decoration: none !important;
   position: relative;
-  transition: transform 0.2s;
+  text-decoration: none !important;
   border: 1px solid var(--contentBd-color, rgba(0,0,0,0.05));
+  box-sizing: border-box;
+  transition: transform 0.2s;
+  flex-grow: 0;
+  flex-shrink: 0;
 }
 
-.mr-card:hover {
+/* Desktop: 3 Kolom */
+@media (min-width: 600px) {
+  .geek-card {
+    width: calc(33.333% - 10px);
+  }
+}
+
+.geek-card:hover {
   transform: translateY(-3px);
   border-color: var(--themeLink, #8875f5);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
 }
 
-.mr-thumb-box {
+/* Gambar Thumbnail */
+.geek-thumb {
   width: 100%;
   aspect-ratio: 16/9;
-  overflow: hidden;
-  background: var(--contentBg-alt, #f0f0f0);
+  background: var(--contentBg-alt, #eee);
   position: relative;
+  overflow: hidden;
 }
-
-.mr-thumb {
+.geek-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s;
 }
 
-.mr-info {
-  padding: 12px 10px;
+/* Info Teks */
+.geek-info {
+  padding: 10px;
 }
-
-.mr-post-title {
-  font-size: 14px;
-  line-height: 1.4;
-  font-weight: 600;
-  color: var(--themeC, #333);
-  margin: 0 0 5px;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.mr-tag {
-  font-size: 10px;
+.geek-tag {
+  font-size: 9px;
   text-transform: uppercase;
   color: var(--themeLink, #8875f5);
   font-weight: 700;
   letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 4px;
+}
+.geek-post-title {
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--themeC, #333);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Animasi Proses */
-.mr-loading {
+/* Skeleton Loading (Agar tidak kaget saat loading) */
+.skeleton {
   background: var(--contentBg-alt, #eee);
-  aspect-ratio: 16/9;
-  border-radius: 10px;
-  animation: pulse 1.5s infinite;
+  height: 180px;
+  animation: pulse 1s infinite alternate;
 }
-@keyframes pulse { 0%{opacity:0.6} 50%{opacity:1} 100%{opacity:0.6} }
+@keyframes pulse { from {opacity: 0.6;} to {opacity: 1;} }
 </style>
 
 <script>
 //<![CDATA[
 (function() {
   const config = {
-    maxPosts: 6, // Request 6 Item
-    noImage: "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=",
-    targetID: 'postBody' 
+    maxPosts: 6, 
+    depth: 50,  
+    noImage: "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
   };
 
-  // Ambil Data Konteks (Judul & Label) dari Halaman Saat Ini
+  // Helper: Ambil elemen pembungkus postingan
+  function getPostTarget() {
+    // Mencoba beberapa selector standar MedianUI/Blogger
+    return document.getElementById('postBody') || 
+           document.querySelector('.post-body') || 
+           document.querySelector('.entry-content') ||
+           document.querySelector('.post-content');
+  }
+
+  // Helper: Ambil konteks (judul & label)
   function getContext() {
-    const title = document.title.split('|')[0].split('-')[0].trim();
-    
-    const labelEls = document.querySelectorAll('a[rel="tag"]');
+    const title = document.title.split('|')[0].trim();
+    // Cari label 
+    const labelEls = document.querySelectorAll('.post-labels a, span.label a, a[rel="tag"]');
     let labels = [];
-    labelEls.forEach(el => labels.push(el.innerText.trim().toLowerCase()));
+    if(labelEls.length > 0) {
+      labelEls.forEach(el => labels.push(el.innerText.trim().toLowerCase()));
+    }
     
-    const stopWords = ["dan", "yang", "di", "ke", "dari", "ini", "itu", "untuk", "cara", "tips", "adalah"];
+    // Pecah judul jadi keyword
+    const stopWords = ["dan", "yang", "di", "ke", "dari", "ini", "itu", "untuk", "cara", "tips", "adalah", "video", "terbaru"];
     const keywords = title.toLowerCase().replace(/[^a-z0-9\s]/gi, '').split(' ')
       .filter(w => w.length > 3 && !stopWords.includes(w));
 
     return { labels, keywords };
   }
 
-  function initRelated() {
-    // Cek apakah di halaman postingan (berakhiran .html)
-    if (window.location.pathname.indexOf('.html') === -1) return;
+  async function initWidget() {
+    // Validasi Halaman (Hanya muncul di halaman postingan .html)
+    if (!window.location.href.match(/\.html/)) return;
 
-    const targetEl = document.getElementById(config.targetID);
-    const wrapper = document.getElementById('median-related-wrapper');
+    // Cari Target Suntik
+    const targetEl = getPostTarget();
+    const wrapper = document.getElementById('geek-related-wrapper');
     
-    if (targetEl && wrapper) {
-      // Sisipkan di bawah artikel
-      targetEl.parentNode.insertBefore(wrapper, targetEl.nextSibling);
-      wrapper.style.display = "block";
+    if (!targetEl || !wrapper) {
+      console.log('Geek Widget: Target element not found.');
+      return;
+    }
+
+    // Pindahkan Widget (Suntik)
+    targetEl.parentNode.insertBefore(wrapper, targetEl.nextSibling);
+    wrapper.style.display = "block";
+
+    const context = getContext();
+
+    try {
+      // Ambil total postingan dulu
+      const resTotal = await fetch('/feeds/posts/summary?alt=json&max-results=0');
+      const jsonTotal = await resTotal.json();
+      const totalPosts = parseInt(jsonTotal.feed.openSearch$totalResults.$t);
+
+      // Tentukan titik acak untuk postingan lama
+      const maxIndex = Math.max(1, totalPosts - config.depth);
+      const randomIndex = Math.floor(Math.random() * maxIndex) + 1;
+
+      // Fetch PARALEL (Terbaru & Random Lama)
+      const [resRecent, resOld] = await Promise.all([
+        fetch(`/feeds/posts/summary?alt=json&max-results=${config.depth}`),
+        fetch(`/feeds/posts/summary?alt=json&start-index=${randomIndex}&max-results=${config.depth}`)
+      ]);
+
+      const dataRecent = await resRecent.json();
+      const dataOld = await resOld.json();
+
+      // Gabung data (cegah duplikat)
+      const allEntries = [...(dataRecent.feed.entry || []), ...(dataOld.feed.entry || [])];
       
-      const context = getContext();
-      
-      // Ambil Feed (Max 100 untuk variasi lebih banyak)
-      fetch('/feeds/posts/summary?alt=json&max-results=100')
-        .then(r => r.json())
-        .then(data => processData(data, context))
-        .catch(e => console.error("Widget Error:", e));
+      processEntries(allEntries, context);
+
+    } catch (e) {
+      console.error("Geek Widget Error:", e);
+      document.getElementById('geek-content').innerHTML = '<small>Gagal memuat rekomendasi.</small>';
     }
   }
 
-  function processData(json, context) {
-    const entries = json.feed.entry || [];
+  function processEntries(entries, context) {
     let candidates = [];
     const currentUrl = window.location.href.split('?')[0];
+    const addedLinks = new Set(); 
 
     entries.forEach(entry => {
-      // Lewati postingan yang sedang dibuka
       const link = entry.link.find(l => l.rel === 'alternate').href;
-      if (link.includes(currentUrl) || currentUrl.includes(link)) return;
+      
+      // Filter: Jangan masukkan postingan yg sedang dibuka atau duplikat
+      if (link.includes(currentUrl) || addedLinks.has(link)) return;
+      addedLinks.add(link);
 
-      const title = entry.title.$t.toLowerCase();
+      const title = entry.title.$t;
       let score = 0;
-      let matchType = '';
-
-      // Cek Kesamaan Label (Prioritas Tinggi: +3 poin)
-      if (entry.category && context.labels.length > 0) {
+      let tagName = 'Arsip';
+  
+      // Cek Label (+5 poin)
+      if (entry.category) {
         entry.category.forEach(cat => {
           if (context.labels.includes(cat.term.toLowerCase())) {
-            score += 3;
-            matchType = cat.term;
+            score += 5;
+            tagName = cat.term;
           }
         });
       }
 
-      // Cek Kesamaan Judul (+1 poin per kata)
+      // Cek Judul (+2 poin per kata)
+      const titleLower = title.toLowerCase();
       context.keywords.forEach(kw => {
-        if (title.includes(kw)) score += 1;
+        if (titleLower.includes(kw)) score += 2;
       });
 
-      // Ambil Gambar
+      // Ambil Gambar (Resolusi w300 agar tajam & cepat)
       let img = config.noImage;
       if (entry.media$thumbnail) {
-        img = entry.media$thumbnail.url.replace(/\/s[0-9]+(\-c)?\//, "/w400-h225-p-k-no-nu/");
+        img = entry.media$thumbnail.url.replace(/\/s[0-9]+(\-c)?\//, "/w300-h168-p-k-no-nu/");
       }
 
+      // Masukkan ke kandidat (jika skor > 0 atau random fill)
       candidates.push({
-        title: entry.title.$t,
+        title: title,
         link: link,
         img: img,
-        score: score,
-        tag: matchType || "Terbaru",
-        rand: Math.random()
+        tag: tagName,
+        finalScore: score + Math.random() 
       });
     });
 
-    candidates.sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return b.rand - a.rand;
-    });
+    // Urutkan dari skor tertinggi
+    candidates.sort((a, b) => b.finalScore - a.finalScore);
 
-    // Potong sesuai jumlah (6)
-    const finalPosts = candidates.slice(0, config.maxPosts);
-    renderWidget(finalPosts);
+    // Ambil top 6
+    renderHTML(candidates.slice(0, config.maxPosts));
   }
 
-  function renderWidget(posts) {
-    const container = document.getElementById('mr-content');
+  function renderHTML(posts) {
+    const container = document.getElementById('geek-content');
+    
     if (posts.length === 0) {
-      container.innerHTML = '<p style="font-size:12px;opacity:0.7;grid-column:1/-1">Belum ada artikel terkait.</p>';
+      container.innerHTML = '<div style="width:100%;text-align:center;opacity:0.6;font-size:12px">Belum ada rekomendasi.</div>';
       return;
     }
 
     let html = '';
-    posts.forEach(post => {
+    posts.forEach(p => {
       html += `
-        <a href="${post.link}" class="mr-card" title="${post.title}">
-          <div class="mr-thumb-box">
-            <img src="${post.img}" alt="${post.title}" class="mr-thumb" loading="lazy">
+        <a href="${p.link}" class="geek-card" title="${p.title}">
+          <div class="geek-thumb">
+            <img src="${p.img}" alt="${p.title}" loading="lazy">
           </div>
-          <div class="mr-info">
-            <span class="mr-tag">${post.tag}</span>
-            <h4 class="mr-post-title">${post.title}</h4>
+          <div class="geek-info">
+            <span class="geek-tag">${p.tag}</span>
+            <h4 class="geek-post-title">${p.title}</h4>
           </div>
         </a>
       `;
@@ -261,12 +307,9 @@
     container.innerHTML = html;
   }
 
-  // Jalankan
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initRelated);
-  } else {
-    initRelated();
-  }
+  // Gunakan 'load' event agar DOM MedianUI sepenuhnya siap
+  window.addEventListener('load', initWidget);
+
 })();
 //]]>
 </script>
