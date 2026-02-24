@@ -1,20 +1,20 @@
-<div id="geek-related-wrapper" style="display:none; width:100%; box-sizing:border-box;">
-  <div class="geek-related-box">
-    <div class="geek-header">
-      <h3 class="geek-title">Baca Juga</h3>
-      <a href="/search" class="geek-more">Arsip Blog &rarr;</a>
+<div id="median-related-wrapper" style="display:none; width:100%; box-sizing:border-box;">
+  <div class="median-related-box">
+    <div class="median-header">
+      <h3 class="median-title">Baca Juga</h3>
+      <a href="/search" class="median-more">Arsip Blog &rarr;</a>
     </div>
     
-    <div id="geek-content" class="geek-container">
-      <div class="geek-card skeleton"></div>
-      <div class="geek-card skeleton"></div>
+    <div id="median-content" class="median-container">
+      <div class="median-card skeleton"></div>
+      <div class="median-card skeleton"></div>
     </div>
   </div>
 </div>
 
 <style>
 /* --- Dukungan Untuk MedianUI (tulis ulang) --- */
-.geek-related-box {
+.median-related-box {
   margin: 30px 0;
   display: block;
   font-family: var(--fontBody, sans-serif);
@@ -23,7 +23,7 @@
 }
 
 /* Gaya Judul */
-.geek-header {
+.median-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -31,14 +31,14 @@
   border-bottom: 2px solid var(--contentBg-alt, #f0f0f0);
   padding-bottom: 10px;
 }
-.geek-title {
+.median-title {
   font-size: 1.1rem;
   font-weight: 700;
   margin: 0;
   color: var(--themeC, #333);
   position: relative;
 }
-.geek-title::after {
+.median-title::after {
   content: '';
   position: absolute;
   bottom: -12px;
@@ -47,7 +47,7 @@
   height: 2px;
   background: var(--themeLink, #8875f5);
 }
-.geek-more {
+.median-more {
   font-size: 0.8rem;
   color: var(--themeLink, #8875f5);
   text-decoration: none;
@@ -55,7 +55,7 @@
 }
 
 /* Container Flexbox */
-.geek-container {
+.median-container {
   display: flex;
   flex-wrap: wrap;
   gap: 15px; 
@@ -63,7 +63,7 @@
 }
 
 /* Gaya Kartu */
-.geek-card {
+.median-card {
   /* Mobile: 2 Kolom (50% - gap) */
   width: calc(50% - 10px); 
   display: flex;
@@ -82,26 +82,26 @@
 
 /* Desktop: 3 Kolom */
 @media (min-width: 600px) {
-  .geek-card {
+  .median-card {
     width: calc(33.333% - 10px);
   }
 }
 
-.geek-card:hover {
+.median-card:hover {
   transform: translateY(-3px);
   border-color: var(--themeLink, #8875f5);
   box-shadow: 0 5px 15px rgba(0,0,0,0.05);
 }
 
 /* Gambar Thumbnail */
-.geek-thumb {
+.median-thumb {
   width: 100%;
   aspect-ratio: 16/9;
   background: var(--contentBg-alt, #eee);
   position: relative;
   overflow: hidden;
 }
-.geek-thumb img {
+.median-thumb img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -109,10 +109,10 @@
 }
 
 /* Info Teks */
-.geek-info {
+.median-info {
   padding: 10px;
 }
-.geek-tag {
+.median-tag {
   font-size: 9px;
   text-transform: uppercase;
   color: var(--themeLink, #8875f5);
@@ -121,7 +121,7 @@
   display: block;
   margin-bottom: 4px;
 }
-.geek-post-title {
+.median-post-title {
   font-size: 13px;
   line-height: 1.4;
   font-weight: 600;
@@ -184,10 +184,10 @@
 
     // Cari Target Suntik
     const targetEl = getPostTarget();
-    const wrapper = document.getElementById('geek-related-wrapper');
+    const wrapper = document.getElementById('median-related-wrapper');
     
     if (!targetEl || !wrapper) {
-      console.log('Geek Widget: Target element not found.');
+      console.log('median Widget: Target element not found.');
       return;
     }
 
@@ -222,8 +222,8 @@
       processEntries(allEntries, context);
 
     } catch (e) {
-      console.error("Geek Widget Error:", e);
-      document.getElementById('geek-content').innerHTML = '<small>Gagal memuat rekomendasi.</small>';
+      console.error("median Widget Error:", e);
+      document.getElementById('median-content').innerHTML = '<small>Gagal memuat rekomendasi.</small>';
     }
   }
 
@@ -283,7 +283,7 @@
   }
 
   function renderHTML(posts) {
-    const container = document.getElementById('geek-content');
+    const container = document.getElementById('median-content');
     
     if (posts.length === 0) {
       container.innerHTML = '<div style="width:100%;text-align:center;opacity:0.6;font-size:12px">Belum ada rekomendasi.</div>';
@@ -293,13 +293,13 @@
     let html = '';
     posts.forEach(p => {
       html += `
-        <a href="${p.link}" class="geek-card" title="${p.title}">
-          <div class="geek-thumb">
+        <a href="${p.link}" class="median-card" title="${p.title}">
+          <div class="median-thumb">
             <img src="${p.img}" alt="${p.title}" loading="lazy">
           </div>
-          <div class="geek-info">
-            <span class="geek-tag">${p.tag}</span>
-            <h4 class="geek-post-title">${p.title}</h4>
+          <div class="median-info">
+            <span class="median-tag">${p.tag}</span>
+            <h4 class="median-post-title">${p.title}</h4>
           </div>
         </a>
       `;
