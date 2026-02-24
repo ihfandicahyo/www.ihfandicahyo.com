@@ -1,0 +1,272 @@
+<div id="median-related-wrapper" style="display:none">
+  <div class="median-related-box">
+    <div class="mr-header">
+      <h3 class="mr-title">Mungkin Kamu Suka</h3>
+      <a href="/search" class="mr-more">Lihat Lainnya</a>
+    </div>
+    
+    <div id="mr-content" class="mr-grid">
+      <div class="mr-loading"></div><div class="mr-loading"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* --- Dukungan Untuk MedianUI --- */
+.median-related-box {
+  margin: 20px 0 30px;
+  display: block;
+  font-family: var(--fontBody, sans-serif);
+}
+
+.mr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--contentBd-color, #eee);
+}
+
+.mr-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--themeC, #333);
+  position: relative;
+}
+
+.mr-title::before {
+  content: '';
+  position: absolute;
+  bottom: -11px;
+  left: 0;
+  width: 50px;
+  height: 2px;
+  background: var(--themeLink, #8875f5);
+  border-radius: 2px;
+}
+
+.mr-more {
+  font-size: 0.85rem;
+  color: var(--themeLink, #8875f5);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+/* --- Tata Letak Kolom Tampilan --- */
+.mr-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Tablet & Desktop 3 kotak */
+@media (min-width: 600px) {
+  .mr-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+/* --- Gaya Kartu --- */
+.mr-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--contentBg, #fff);
+  border-radius: 10px;
+  overflow: hidden;
+  text-decoration: none !important;
+  position: relative;
+  transition: transform 0.2s;
+  border: 1px solid var(--contentBd-color, rgba(0,0,0,0.05));
+}
+
+.mr-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--themeLink, #8875f5);
+}
+
+.mr-thumb-box {
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  background: var(--contentBg-alt, #f0f0f0);
+  position: relative;
+}
+
+.mr-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+}
+
+.mr-info {
+  padding: 12px 10px;
+}
+
+.mr-post-title {
+  font-size: 14px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--themeC, #333);
+  margin: 0 0 5px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mr-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--themeLink, #8875f5);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Animasi Proses */
+.mr-loading {
+  background: var(--contentBg-alt, #eee);
+  aspect-ratio: 16/9;
+  border-radius: 10px;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse { 0%{opacity:0.6} 50%{opacity:1} 100%{opacity:0.6} }
+</style>
+
+<script>
+//<![CDATA[
+(function() {
+  const config = {
+    maxPosts: 6, // Request 6 Item
+    noImage: "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=",
+    targetID: 'postBody' 
+  };
+
+  // Ambil Data Konteks (Judul & Label) dari Halaman Saat Ini
+  function getContext() {
+    const title = document.title.split('|')[0].split('-')[0].trim();
+    
+    const labelEls = document.querySelectorAll('a[rel="tag"]');
+    let labels = [];
+    labelEls.forEach(el => labels.push(el.innerText.trim().toLowerCase()));
+    
+    const stopWords = ["dan", "yang", "di", "ke", "dari", "ini", "itu", "untuk", "cara", "tips", "adalah"];
+    const keywords = title.toLowerCase().replace(/[^a-z0-9\s]/gi, '').split(' ')
+      .filter(w => w.length > 3 && !stopWords.includes(w));
+
+    return { labels, keywords };
+  }
+
+  function initRelated() {
+    // Cek apakah di halaman postingan (berakhiran .html)
+    if (window.location.pathname.indexOf('.html') === -1) return;
+
+    const targetEl = document.getElementById(config.targetID);
+    const wrapper = document.getElementById('median-related-wrapper');
+    
+    if (targetEl && wrapper) {
+      // Sisipkan di bawah artikel
+      targetEl.parentNode.insertBefore(wrapper, targetEl.nextSibling);
+      wrapper.style.display = "block";
+      
+      const context = getContext();
+      
+      // Ambil Feed (Max 100 untuk variasi lebih banyak)
+      fetch('/feeds/posts/summary?alt=json&max-results=100')
+        .then(r => r.json())
+        .then(data => processData(data, context))
+        .catch(e => console.error("Widget Error:", e));
+    }
+  }
+
+  function processData(json, context) {
+    const entries = json.feed.entry || [];
+    let candidates = [];
+    const currentUrl = window.location.href.split('?')[0];
+
+    entries.forEach(entry => {
+      // Lewati postingan yang sedang dibuka
+      const link = entry.link.find(l => l.rel === 'alternate').href;
+      if (link.includes(currentUrl) || currentUrl.includes(link)) return;
+
+      const title = entry.title.$t.toLowerCase();
+      let score = 0;
+      let matchType = '';
+
+      // Cek Kesamaan Label (Prioritas Tinggi: +3 poin)
+      if (entry.category && context.labels.length > 0) {
+        entry.category.forEach(cat => {
+          if (context.labels.includes(cat.term.toLowerCase())) {
+            score += 3;
+            matchType = cat.term;
+          }
+        });
+      }
+
+      // Cek Kesamaan Judul (+1 poin per kata)
+      context.keywords.forEach(kw => {
+        if (title.includes(kw)) score += 1;
+      });
+
+      // Ambil Gambar
+      let img = config.noImage;
+      if (entry.media$thumbnail) {
+        img = entry.media$thumbnail.url.replace(/\/s[0-9]+(\-c)?\//, "/w400-h225-p-k-no-nu/");
+      }
+
+      candidates.push({
+        title: entry.title.$t,
+        link: link,
+        img: img,
+        score: score,
+        tag: matchType || "Terbaru",
+        rand: Math.random()
+      });
+    });
+
+    candidates.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return b.rand - a.rand;
+    });
+
+    // Potong sesuai jumlah (6)
+    const finalPosts = candidates.slice(0, config.maxPosts);
+    renderWidget(finalPosts);
+  }
+
+  function renderWidget(posts) {
+    const container = document.getElementById('mr-content');
+    if (posts.length === 0) {
+      container.innerHTML = '<p style="font-size:12px;opacity:0.7;grid-column:1/-1">Belum ada artikel terkait.</p>';
+      return;
+    }
+
+    let html = '';
+    posts.forEach(post => {
+      html += `
+        <a href="${post.link}" class="mr-card" title="${post.title}">
+          <div class="mr-thumb-box">
+            <img src="${post.img}" alt="${post.title}" class="mr-thumb" loading="lazy">
+          </div>
+          <div class="mr-info">
+            <span class="mr-tag">${post.tag}</span>
+            <h4 class="mr-post-title">${post.title}</h4>
+          </div>
+        </a>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  // Jalankan
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRelated);
+  } else {
+    initRelated();
+  }
+})();
+//]]>
+</script>
