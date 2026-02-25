@@ -148,7 +148,7 @@
   const config = {
     maxPosts: 6, 
     depth: 50,  
-    noImage: "data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+    noImage: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='168' viewBox='0 0 300 168'%3E%3Crect width='100%25' height='100%25' fill='%238875f5'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='white'%3EO_o%3C/text%3E%3C/svg%3E"
   };
 
   // Helper: Ambil elemen pembungkus postingan
@@ -263,7 +263,7 @@
       let img = config.noImage;
       if (entry.media$thumbnail) {
         img = entry.media$thumbnail.url.replace(/\/s[0-9]+(\-c)?\//, "/w300-h168-p-k-no-nu/");
-      }
+    }
 
       // Masukkan ke kandidat (jika skor > 0 atau random fill)
       candidates.push({
