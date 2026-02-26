@@ -1,7 +1,7 @@
 <style>
   /* Bingkai Utama berbasis MedianUI */
   #random-post-daily {
-    display: none;
+    display: none; 
     margin: 20px 0;
     padding: 15px;
     background: var(--content-bg);
@@ -41,7 +41,34 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  .rp-inner { position: relative; z-index: 3; }
+  /* Indikator Loading dengan dukungan MedianUI */
+  #loading-message {
+    text-align: center;
+    padding: 20px 0;
+    color: #8875F5;
+    font-size: 13px;
+    font-style: italic;
+    position: relative;
+    z-index: 3;
+  }
+  .loader {
+    border: 4px solid var(--border-color, #f3f3f3);
+    border-top: 4px solid #8875F5; 
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px auto;
+  }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  /* Konten Asli (Disembunyikan saat loading) */
+  .rp-inner { 
+    position: relative; 
+    z-index: 3; 
+    display: none; 
+  }
+  
   .rp-header {
     font-size: 10px;
     font-weight: 700;
@@ -84,17 +111,22 @@
 </style>
 
 <div id="random-post-daily">
-  <svg class="rp-ornament orn-tl" viewbox="0 0 100 100"><path d="M0 0v100c0-55.2 44.8-100 100-100H0zm20 20c0 33.1 26.9 60 60 60V20H20z" opacity=".2"/><path d="M5 5v40c0-19.3 15.7-35 35-35H5zm10 10c0 11 9 20 20 20V15H15z"/></path></path></svg>
-  <svg class="rp-ornament orn-br" viewbox="0 0 100 100"><path d="M0 0v100c0-55.2 44.8-100 100-100H0zm20 20c0 33.1 26.9 60 60 60V20H20z" opacity=".2"/><path d="M5 5v40c0-19.3 15.7-35 35-35H5zm10 10c0 11 9 20 20 20V15H15z"/></path></path></svg>
+  <svg class="rp-ornament orn-tl" viewbox="0 0 100 100"><path d="M0 0v100c0-55.2 44.8-100 100-100H0zm20 20c0 33.1 26.9 60 60 60V20H20z" opacity=".2"/><path d="M5 5v40c0-19.3 15.7-35 35-35H5zm10 10c0 11 9 20 20 20V15H15z"/></path></svg>
+  <svg class="rp-ornament orn-br" viewbox="0 0 100 100"><path d="M0 0v100c0-55.2 44.8-100 100-100H0zm20 20c0 33.1 26.9 60 60 60V20H20z" opacity=".2"/><path d="M5 5v40c0-19.3 15.7-35 35-35H5zm10 10c0 11 9 20 20 20V15H15z"/></path></svg>
   
-  <div class="rp-inner">
+  <div id="loading-message">
+    <div class="loader"></div>
+    <div>Mengumpulkan arsip...</div>
+  </div>
+
+  <div class="rp-inner" id="rp-inner-content">
     <div class="rp-header">Postingan Pilihan Hari Ini</div>
     <a id="rp-content" href="#">
       <div class="rp-img-frame">
         <img id="rp-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Thumbnail" />
       </div>
       <div class="rp-info">
-        <h3 id="rp-title">Memuat arsip...</h3>
+        <h3 id="rp-title">Memuat...</h3>
         <span id="rp-date"></span>
       </div>
     </a>
@@ -108,19 +140,56 @@
 
   const STORAGE_KEY = 'daily_random_post_data';
 
+  // Fungsi untuk menampilkan postingan dan menyembunyikan loading
   function displayPost(data) {
     document.getElementById('rp-title').innerText = data.title;
     document.getElementById('rp-content').href = data.url;
     document.getElementById('rp-date').innerText = data.date;
     document.getElementById('rp-image').src = data.imgUrl;
+    
+    document.getElementById('loading-message').style.display = 'none';
+    document.getElementById('rp-inner-content').style.display = 'block';
     document.getElementById('random-post-daily').style.display = 'block';
   }
 
+  // Fungsi Rekursif
+  async function fetchAllPosts(startIndex = 1, accumulatedPosts = []) {
+    const maxResults = 150; 
+    
+    try {
+      const res = await fetch(`/feeds/posts/summary?alt=json&start-index=${startIndex}&max-results=${maxResults}`);
+      const data = await res.json();
+      
+      if (data.feed.entry && data.feed.entry.length > 0) {
+        const posts = data.feed.entry.map(entry => {
+          return {
+            title: entry.title.$t,
+            url: entry.link.find(l => l.rel === 'alternate').href,
+            date: new Date(entry.published.$t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+            imgUrl: entry.media$thumbnail ? entry.media$thumbnail.url.replace(/\/s72\-c/, "/s200") : 'https://placehold.co/200x200/8875F5/ffffff?text=O_o'
+          };
+        });
+        
+        accumulatedPosts = accumulatedPosts.concat(posts);
+        
+        if (data.feed.entry.length === maxResults) {
+          return await fetchAllPosts(startIndex + maxResults, accumulatedPosts);
+        }
+      }
+      return accumulatedPosts;
+    } catch (error) {
+      console.error("Gagal mengambil arsip postingan:", error);
+      return accumulatedPosts; 
+    }
+  }
+
+  // Fungsi Utama
   async function fetchRandomPost() {
     const now = new Date();
     const todayStr = now.toDateString(); 
     const cachedData = localStorage.getItem(STORAGE_KEY);
     
+    // Jika ada cache valid, tampilkan langsung
     if (cachedData) {
       const parsedData = JSON.parse(cachedData);
       if (parsedData.cacheDate === todayStr) {
@@ -128,36 +197,29 @@
         return; 
       }
     }
+    
+    document.getElementById('random-post-daily').style.display = 'block';
 
     try {
-      const resTotal = await fetch(`/feeds/posts/summary?alt=json&max-results=0`);
-      const dataTotal = await resTotal.json();
-      const totalPosts = parseInt(dataTotal.feed.openSearch$totalResults.$t);
+      const allPosts = await fetchAllPosts();
       
-      const seed = now.getFullYear() * 1000 + (now.getMonth() + 1) * 100 + now.getDate();
-      const pseudoRandom = (Math.abs(Math.sin(seed) * 10000) % 1);
-      
-      const safeTotal = totalPosts > 10 ? totalPosts - 5 : totalPosts; 
-      const randomIndex = Math.floor(pseudoRandom * safeTotal) + 1;
+      if (allPosts.length > 0) {
+        const seed = now.getFullYear() * 1000 + (now.getMonth() + 1) * 100 + now.getDate();
+        const pseudoRandom = (Math.abs(Math.sin(seed) * 10000) % 1);
+        
+        const randomIndex = Math.floor(pseudoRandom * allPosts.length);
+        const selectedPost = allPosts[randomIndex];
+        selectedPost.cacheDate = todayStr;
 
-      const resPost = await fetch(`/feeds/posts/summary?alt=json&start-index=${randomIndex}&max-results=1`);
-      const dataPost = await resPost.json();
-      
-      if (dataPost.feed.entry && dataPost.feed.entry.length > 0) {
-        const entry = dataPost.feed.entry[0];
-        const postData = {
-          title: entry.title.$t,
-          url: entry.link.find(l => l.rel === 'alternate').href,
-          date: new Date(entry.published.$t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-          imgUrl: entry.media$thumbnail ? entry.media$thumbnail.url.replace(/\/s72\-c/, "/s200") : 'https://placehold.co/200x200/8875F5/ffffff?text=O_o',
-          cacheDate: todayStr
-        };
-
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(postData));
-        displayPost(postData);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedPost));
+        
+        displayPost(selectedPost);
+      } else {
+        document.getElementById('loading-message').innerHTML = "Belum ada postingan ditemukan.";
       }
     } catch (e) {
       console.error("Widget Error:", e);
+      document.getElementById('loading-message').innerHTML = "Gagal memuat arsip.";
     }
   }
 
