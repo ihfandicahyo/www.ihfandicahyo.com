@@ -106,43 +106,55 @@
   const isHomepage = window.location.pathname === '/' || window.location.pathname === '/index.html' || window.location.pathname === '';
   if (!isHomepage) return;
 
+  const STORAGE_KEY = 'daily_random_post_data';
+
+  function displayPost(data) {
+    document.getElementById('rp-title').innerText = data.title;
+    document.getElementById('rp-content').href = data.url;
+    document.getElementById('rp-date').innerText = data.date;
+    document.getElementById('rp-image').src = data.imgUrl;
+    document.getElementById('random-post-daily').style.display = 'block';
+  }
+
   async function fetchRandomPost() {
+    const now = new Date();
+    const todayStr = now.toDateString(); 
+    const cachedData = localStorage.getItem(STORAGE_KEY);
+    
+    if (cachedData) {
+      const parsedData = JSON.parse(cachedData);
+      if (parsedData.cacheDate === todayStr) {
+        displayPost(parsedData);
+        return; 
+      }
+    }
+
     try {
-      // Ambil total jumlah postingan
       const resTotal = await fetch(`/feeds/posts/summary?alt=json&max-results=0`);
       const dataTotal = await resTotal.json();
       const totalPosts = parseInt(dataTotal.feed.openSearch$totalResults.$t);
-
-      // Hanya berganti sekali sehari
-      const today = new Date();
-      const seed = today.getFullYear() * 1000 + (today.getMonth() + 1) * 100 + today.getDate();
+      
+      const seed = now.getFullYear() * 1000 + (now.getMonth() + 1) * 100 + now.getDate();
       const pseudoRandom = (Math.abs(Math.sin(seed) * 10000) % 1);
       
-      // Ambil indeks acak 
       const safeTotal = totalPosts > 10 ? totalPosts - 5 : totalPosts; 
       const randomIndex = Math.floor(pseudoRandom * safeTotal) + 1;
 
-      // Ambil satu postingan berdasarkan nomor urut (start-index)
       const resPost = await fetch(`/feeds/posts/summary?alt=json&start-index=${randomIndex}&max-results=1`);
       const dataPost = await resPost.json();
       
       if (dataPost.feed.entry && dataPost.feed.entry.length > 0) {
         const entry = dataPost.feed.entry[0];
-        const title = entry.title.$t;
-        const url = entry.link.find(l => l.rel === 'alternate').href;
-        const date = new Date(entry.published.$t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-        
-        // Deteksi Gambar (Otomatis ke s200 agar tajam)
-        let imgUrl = 'https://placehold.co/200x200/8875F5/ffffff?text=O_o';
-        if (entry.media$thumbnail) {
-          imgUrl = entry.media$thumbnail.url.replace(/\/s72\-c/, "/s200");
-        }
+        const postData = {
+          title: entry.title.$t,
+          url: entry.link.find(l => l.rel === 'alternate').href,
+          date: new Date(entry.published.$t).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
+          imgUrl: entry.media$thumbnail ? entry.media$thumbnail.url.replace(/\/s72\-c/, "/s200") : 'https://placehold.co/200x200/8875F5/ffffff?text=O_o',
+          cacheDate: todayStr
+        };
 
-        document.getElementById('rp-title').innerText = title;
-        document.getElementById('rp-content').href = url;
-        document.getElementById('rp-date').innerText = date;
-        document.getElementById('rp-image').src = imgUrl;
-        document.getElementById('random-post-daily').style.display = 'block';
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(postData));
+        displayPost(postData);
       }
     } catch (e) {
       console.error("Widget Error:", e);
