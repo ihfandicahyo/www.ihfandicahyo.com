@@ -171,7 +171,7 @@
       let spacedHtml = rawHtml.replace(/>/g, '> ');
       const doc = parser.parseFromString(spacedHtml, 'text/html');
       const cleanText = doc.body.textContent || "";
-      const words = cleanText.toLowerCase().match(/\b[a-z]{3,}\b/g);
+      const words = cleanText.toLowerCase().match(/\p{L}{3,}/gu);
 
       if (words) {
         words.forEach(word => {
