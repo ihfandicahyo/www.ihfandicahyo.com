@@ -1,0 +1,151 @@
+<div class="cs-container">
+  <form id="cs-form" class="cs-form" autocomplete="off">
+    <input type="text" id="cs-input" class="cs-input" placeholder="Ketik pencarian..." required>
+    <button type="submit" id="cs-btn" class="cs-button" aria-label="Cari">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    </button>
+  </form>
+  <div id="cs-output" class="cs-output"></div>
+</div>
+
+<style>
+.cs-container { font-family: var(--fontBody); width: 100%; }
+.cs-form { display: flex; align-items: center; border: 1px solid var(--themeBd); border-radius: var(--contentBd-radius, 5px); background-color: var(--themeBg); overflow: hidden; margin-bottom: 25px; transition: border-color 0.2s; }
+.cs-form:focus-within { border-color: var(--themeColor, var(--themeLink)); }
+.cs-input { flex: 1; border: none; padding: 14px 16px; background: transparent; color: var(--themeC); font-family: inherit; font-size: 15px; outline: none; }
+.cs-button { background-color: var(--themeColor, var(--themeLink)); color: #fff; border: none; padding: 0 16px; align-self: stretch; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }
+.cs-button:hover { opacity: 0.85; }
+.cs-button svg { width: 18px; height: 18px; }
+.cs-output { display: flex; flex-direction: column; }
+.cs-item { display: flex; padding: 16px 0; border-bottom: 1px solid var(--themeBd); gap: 16px; }
+.cs-item:last-child { border-bottom: none; }
+.cs-thumb-box { width: 85px; height: 85px; flex-shrink: 0; border-radius: var(--contentBd-radius, 5px); background-color: var(--themeBg-alt, #f5f5f5); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid var(--themeBd); }
+.cs-thumb-box img { width: 100%; height: 100%; object-fit: cover; }
+.cs-thumb-none { font-family: var(--fontHead); font-weight: 700; color: var(--themeC-alt); font-size: 18px; letter-spacing: 1px; }
+.cs-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.cs-title { color: var(--themeC); font-family: var(--fontHead); font-size: 16px; font-weight: 700; line-height: 1.4; text-decoration: none; margin-bottom: 6px; }
+.cs-title:hover { color: var(--themeColor, var(--themeLink)); }
+.cs-meta { font-size: 12.5px; color: var(--themeC-alt); margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+.cs-desc { font-size: 13.5px; color: var(--themeC-alt); line-height: 1.6; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cs-mark { background-color: var(--themeColor, var(--themeLink)); color: #fff; padding: 0 4px; border-radius: 3px; font-weight: normal; }
+.cs-msg { text-align: center; padding: 40px 15px; color: var(--themeC-alt); font-size: 14px; }
+.cs-stat { font-size: 14px; color: var(--themeC); font-weight: 600; padding: 0 0 15px 0; border-bottom: 1px solid var(--themeBd); margin-bottom: 5px; }
+.cs-load-wrap { display: flex; flex-direction: column; align-items: center; padding: 50px 0; gap: 15px; }
+.line.sp { width: 40px; height: 40px; animation: sp-spin 2s linear infinite; }
+.line.sp circle { fill: none; stroke: var(--themeColor, var(--themeLink)); stroke-width: 4; stroke-linecap: round; animation: sp-dash 1.5s ease-in-out infinite; }
+@keyframes sp-spin { 100% { transform: rotate(360deg); } }
+@keyframes sp-dash { 0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; } 50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; } 100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; } }
+.cs-load-text { font-size: 13px; color: var(--themeC-alt); }
+</style>
+
+<script>
+let allBloggerPosts = [];
+let isDataLoaded = false;
+let isFetching = false;
+
+document.getElementById('cs-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const rawQuery = document.getElementById('cs-input').value.trim();
+  if (!rawQuery) return;
+  const query = rawQuery.toLowerCase();
+  const output = document.getElementById('cs-output');
+  if (isDataLoaded) {
+    displayResults(query, rawQuery, output);
+  } else {
+    if (isFetching) return;
+    isFetching = true;
+    output.innerHTML = `
+      <div class="cs-load-wrap">
+        <svg class="line sp" viewBox="0 0 50 50"><circle cx="25" cy="25" r="20"></circle></svg>
+        <div class="cs-load-text">Mengambil data... <span id="cs-count" style="font-weight:700;color:var(--themeC);">0 / 0</span></div>
+      </div>
+    `;
+    fetchAllData(query, rawQuery, output, 1);
+  }
+});
+
+function fetchAllData(query, rawQuery, output, startIndex) {
+  const max = 150;
+  const feedUrl = `/feeds/posts/default?alt=json&max-results=${max}&start-index=${startIndex}`;
+  fetch(feedUrl)
+    .then(response => response.json())
+    .then(data => {
+      const entries = data.feed.entry || [];
+      const totalPosts = parseInt(data.feed.openSearch$totalResults.$t, 10);
+      allBloggerPosts = allBloggerPosts.concat(entries);
+      const countEl = document.getElementById('cs-count');
+      if(countEl) countEl.innerText = `${allBloggerPosts.length} / ${totalPosts}`;
+      if (allBloggerPosts.length < totalPosts && entries.length > 0) {
+        fetchAllData(query, rawQuery, output, startIndex + entries.length);
+      } else {
+        isDataLoaded = true;
+        isFetching = false;
+        displayResults(query, rawQuery, output);
+      }
+    })
+    .catch(error => {
+      isFetching = false;
+      output.innerHTML = '<div class="cs-msg">Gagal mengambil data. Silakan periksa koneksi.</div>';
+    });
+}
+
+function displayResults(query, rawQuery, output) {
+  let resultsHTML = '';
+  let matchCount = 0;
+  allBloggerPosts.forEach(entry => {
+    const title = entry.title.$t || '';
+    const titleLower = title.toLowerCase();
+    let content = entry.content ? entry.content.$t : (entry.summary ? entry.summary.$t : '');
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = content;
+    const plainText = tempDiv.textContent || tempDiv.innerText || "";
+    const plainTextLower = plainText.toLowerCase();
+    let labels = '';
+    if (entry.category) { labels = entry.category.map(c => c.term).join(' ').toLowerCase(); }
+    if (titleLower.includes(query) || plainTextLower.includes(query) || labels.includes(query)) {
+      matchCount++;
+      let postUrl = '';
+      for (let i = 0; i < entry.link.length; i++) {
+        if (entry.link[i].rel === 'alternate') { postUrl = entry.link[i].href; break; }
+      }
+      let thumbUrl = '';
+      if (entry.media$thumbnail) {
+        thumbUrl = entry.media$thumbnail.url.replace('/s72-c/', '/s150-c/');
+      } else {
+        const imgRegex = /<img[^>]+src="([^">]+)"/g;
+        const match = imgRegex.exec(content);
+        if (match) thumbUrl = match[1];
+      }
+      const thumbHtml = thumbUrl ? `<img src="${thumbUrl}" alt="Thumbnail">` : `<span class="cs-thumb-none">O_o</span>`;
+      const date = new Date(entry.published.$t).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+      let snippet = "";
+      let index = plainTextLower.indexOf(query);
+      if (index !== -1) {
+        let start = Math.max(0, index - 50);
+        let end = Math.min(plainText.length, index + query.length + 50);
+        snippet = plainText.substring(start, end);
+        snippet = (start > 0 ? "..." : "") + snippet + (end < plainText.length ? "..." : "");
+        const regex = new RegExp(rawQuery, "gi");
+        snippet = snippet.replace(regex, match => `<mark class="cs-mark">${match}</mark>`);
+      } else {
+        snippet = plainText.substring(0, 110) + "...";
+      }
+      resultsHTML += `
+        <div class="cs-item">
+          <div class="cs-thumb-box">${thumbHtml}</div>
+          <div class="cs-info">
+            <a href="${postUrl}" class="cs-title">${title}</a>
+            <div class="cs-meta"><span>${date}</span></div>
+            <div class="cs-desc">${snippet}</div>
+          </div>
+        </div>
+      `;
+    }
+  });
+  if (matchCount > 0) {
+    output.innerHTML = `<div class="cs-stat">Menampilkan ${matchCount} hasil untuk "${rawQuery}"</div>` + resultsHTML;
+  } else {
+    output.innerHTML = `<div class="cs-msg">Tidak ada hasil yang ditemukan untuk "${rawQuery}".</div>`;
+  }
+}
+</script>
