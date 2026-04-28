@@ -1,13 +1,14 @@
 <div id="flashback-container">
     <div id="loading-message">
-        <div class="loader"></div>
+        <svg class="loader" viewBox="0 0 50 50">
+  <circle cx="25" cy="25" r="20" fill="none"></circle>
+</svg>
         <p> </p>
     </div>
     <div id="results-area"></div>
 </div>
 
 <style>
-    /* Desain Container Utama */
     #flashback-container {
         font-family: inherit;
         max-width: 100%;
@@ -15,7 +16,6 @@
         padding: 10px;
     }
 
-    /* Indikator Loading */
     #loading-message {
         text-align: center;
         padding: 40px;
@@ -23,17 +23,39 @@
         font-style: italic;
     }
     .loader {
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid #8875F5; 
-        border-radius: 50%;
-        width: 30px;
-        height: 30px;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 10px auto;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 10px auto;
+  animation: spin 2s linear infinite;
+}
 
-    /* Desain Kartu Postingan */
+.loader circle {
+  stroke: #8875F5;
+  stroke-width: 4;
+  stroke-linecap: round;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
+
     .flashback-post {
         background: transparent;
         margin-bottom: 30px;
@@ -42,7 +64,6 @@
         animation: fadeIn 0.5s ease-in;
     }
     
-    /* Header Postingan (Tahun & Judul) */
     .flashback-header {
         margin-bottom: 15px;
     }
@@ -69,18 +90,15 @@
         text-decoration: underline;
     }
 
-    /* Isi Konten Postingan */
     .flashback-content {
         line-height: 1.6;
         color: inherit;
     }
-    /* Membatasi gambar agar tidak melebar keluar */
     .flashback-content img {
         max-width: 100%;
         height: auto;
     }
 
-    /* Animasi Muncul */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -88,15 +106,14 @@
 </style>
 
 <script>
-    const API_KEY = 'XXXX'; 
-    const BLOG_ID = 'XXXX'; 
+    const API_KEY = 'AIzaSyDPliBpzAnGEJhxNuhVdHIG7iri3ga4_0E'; 
+    const BLOG_ID = '5360007822337580481'; 
     const START_YEAR = 2012;
 
     async function getBloggerFlashback() {
         const resultsArea = document.getElementById('results-area');
         const loadingMsg = document.getElementById('loading-message');
         
-        // Mengatur Waktu (Mengikuti waktu user membuka browser)
         const now = new Date();
         const currentYear = now.getFullYear();
         const month = now.getMonth(); // 0-11
@@ -105,16 +122,12 @@
         let foundPosts = [];
         let promises = [];
 
-        // Looping tahun
         for (let y = START_YEAR; y <= currentYear; y++) {
-            // Membuat format ISO Date untuk start dan end hari tersebut
-            // Handle timezone,dengan Local time user -> ISO
             let startDate = new Date(y, month, day, 0, 0, 0).toISOString();
             let endDate = new Date(y, month, day, 23, 59, 59).toISOString();
 
             const url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts?key=${API_KEY}&startDate=${startDate}&endDate=${endDate}&fetchBodies=true`;
 
-            // Simpan request ke dalam antrian (Promise)
             promises.push(
                 fetch(url)
                 .then(response => response.json())
@@ -129,24 +142,16 @@
             );
         }
 
-        // Jalankan semua request secara bersamaan
         await Promise.all(promises);
-
-        // Sembunyikan loading
         loadingMsg.style.display = 'none';
-
-        // Urutkan postingan berdasarkan tanggal (terlama ke terbaru)
         foundPosts.sort((a, b) => new Date(a.published) - new Date(b.published));
 
         if (foundPosts.length === 0) {
             resultsArea.innerHTML = `<p style="text-align:center;">Tidak ada postingan ditemukan pada tanggal ini di tahun-tahun sebelumnya.</p>`;
         } else {
-            // Render HTML untuk setiap postingan
             foundPosts.forEach(post => {
                 const dateObj = new Date(post.published);
                 const yearStr = dateObj.getFullYear();
-                
-                // Membuat elemen HTML
                 const postDiv = document.createElement('div');
                 postDiv.className = 'flashback-post';
                 
@@ -163,7 +168,5 @@
             });
         }
     }
-
-    // Jalankan fungsi saat halaman dimuat
     document.addEventListener('DOMContentLoaded', getBloggerFlashback);
 </script>
