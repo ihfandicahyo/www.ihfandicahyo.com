@@ -12,10 +12,37 @@
 .cs-container { font-family: var(--fontBody); width: 100%; }
 .cs-form { display: flex; align-items: center; border: 1px solid var(--themeBd); border-radius: var(--contentBd-radius, 5px); background-color: var(--themeBg); overflow: hidden; margin-bottom: 25px; transition: border-color 0.2s; }
 .cs-form:focus-within { border-color: var(--themeColor, var(--themeLink)); }
-.cs-input { flex: 1; border: none; padding: 14px 16px; background: transparent; color: var(--themeC); font-family: inherit; font-size: 15px; outline: none; }
-.cs-button { background-color: var(--themeColor, var(--themeLink)); color: #fff; border: none; padding: 0 16px; align-self: stretch; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }
+
+.cs-input { 
+  flex: 1; 
+  border: none; 
+  padding: 18px 20px;
+  background: transparent; 
+  color: var(--themeC); 
+  font-family: inherit; 
+  font-size: 17px;
+  outline: none; 
+}
+
+.cs-button { 
+  background-color: var(--themeColor, var(--themeLink)); 
+  color: #fff; 
+  border: none; 
+  padding: 0 24px;
+  align-self: stretch; 
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  transition: opacity 0.2s; 
+}
 .cs-button:hover { opacity: 0.85; }
-.cs-button svg { width: 18px; height: 18px; }
+
+.cs-button svg { 
+  width: 22px;
+  height: 22px;
+}
+
 .cs-output { display: flex; flex-direction: column; }
 .cs-item { display: flex; padding: 16px 0; border-bottom: 1px solid var(--themeBd); gap: 16px; }
 .cs-item:last-child { border-bottom: none; }
@@ -130,11 +157,12 @@ function displayResults(query, rawQuery, output) {
       } else {
         snippet = plainText.substring(0, 110) + "...";
       }
+      
       resultsHTML += `
         <div class="cs-item">
           <div class="cs-thumb-box">${thumbHtml}</div>
           <div class="cs-info">
-            <a href="${postUrl}" class="cs-title">${title}</a>
+            <a href="${postUrl}" class="cs-title" target="_blank" rel="noopener noreferrer">${title}</a>
             <div class="cs-meta"><span>${date}</span></div>
             <div class="cs-desc">${snippet}</div>
           </div>
