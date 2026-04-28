@@ -13,16 +13,19 @@
 </div>
 
 <style>
-/* --- Dukungan Untuk MedianUI (tulis ulang) --- */
 .median-related-box {
   margin: 30px 0;
   display: block;
-  font-family: var(--fontBody, sans-serif);
+  font-family: var(--fontBody, 'Inter', sans-serif) !important;
   width: 100%;
   clear: both;
 }
 
-/* Gaya Judul */
+.median-post-title,
+.median-tag {
+  font-family: 'Fira Sans', var(--fontBody-alt, sans-serif) !important;
+}
+
 .median-header {
   display: flex;
   justify-content: space-between;
@@ -31,9 +34,10 @@
   border-bottom: 2px solid var(--contentBg-alt, #f0f0f0);
   padding-bottom: 10px;
 }
+
 .median-title {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   margin: 0;
   color: var(--themeC, #333);
   position: relative;
@@ -48,13 +52,13 @@
   background: var(--themeLink, #8875f5);
 }
 .median-more {
-  font-size: 0.8rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
   color: var(--themeLink, #8875f5);
   text-decoration: none;
-  font-weight: 600;
 }
 
-/* Container Flexbox */
 .median-container {
   display: flex;
   flex-wrap: wrap;
@@ -62,9 +66,7 @@
   margin: 0 -5px;
 }
 
-/* Gaya Kartu */
 .median-card {
-  /* Mobile: 2 Kolom (50% - gap) */
   width: calc(50% - 10px); 
   display: flex;
   flex-direction: column;
@@ -80,7 +82,6 @@
   flex-shrink: 0;
 }
 
-/* Desktop: 3 Kolom */
 @media (min-width: 600px) {
   .median-card {
     width: calc(33.333% - 10px);
@@ -93,7 +94,6 @@
   box-shadow: 0 5px 15px rgba(0,0,0,0.05);
 }
 
-/* Gambar Thumbnail */
 .median-thumb {
   width: 100%;
   aspect-ratio: 16/9;
@@ -108,32 +108,32 @@
   transition: opacity 0.3s;
 }
 
-/* Info Teks */
 .median-info {
   padding: 10px;
 }
 .median-tag {
-  font-size: 9px;
+  font-family: 'Fira Sans', var(--fontBody-alt, sans-serif) !important;
+  font-size: 10px;
   text-transform: uppercase;
   color: var(--themeLink, #8875f5);
-  font-weight: 700;
+  font-weight: 500 !important;
   letter-spacing: 0.5px;
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 .median-post-title {
-  font-size: 13px;
-  line-height: 1.4;
-  font-weight: 600;
+  font-family: 'Fira Sans', var(--fontBody-alt, sans-serif) !important;
   color: var(--themeC, #333);
   margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 500 !important;;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* Skeleton Loading (Agar tidak kaget saat loading) */
 .skeleton {
   background: var(--contentBg-alt, #eee);
   height: 180px;
@@ -148,29 +148,25 @@
   const config = {
     maxPosts: 6, 
     depth: 50,  
-    noImage: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='168' viewBox='0 0 300 168'%3E%3Crect width='100%25' height='100%25' fill='%238875f5'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24' fill='white'%3EO_o%3C/text%3E%3C/svg%3E"
+    noImage: "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%238875F5' opacity='0.05'/%3E%3Cg transform='translate(40, 10) scale(0.7)'%3E%3Ccircle cx='50' cy='22' r='10' fill='%238875F5' opacity='0.4'/%3E%3Cpolygon points='20,85 40,45 60,85' fill='%238875F5' stroke='%238875F5' stroke-width='8' stroke-linejoin='round' opacity='0.4'/%3E%3Cpolygon points='55,85 75,55 90,85' fill='%238875F5' stroke='%238875F5' stroke-width='6' stroke-linejoin='round' opacity='0.4'/%3E%3C/g%3E%3C/svg%3E"
   };
 
-  // Helper: Ambil elemen pembungkus postingan
   function getPostTarget() {
-    // Mencoba beberapa selector standar MedianUI/Blogger
-    return document.getElementById('postBody') || 
+    return document.getElementById('relatedPost') ||
+           document.getElementById('postBody') || 
            document.querySelector('.post-body') || 
            document.querySelector('.entry-content') ||
            document.querySelector('.post-content');
   }
 
-  // Helper: Ambil konteks (judul & label)
   function getContext() {
     const title = document.title.split('|')[0].trim();
-    // Cari label 
     const labelEls = document.querySelectorAll('.post-labels a, span.label a, a[rel="tag"]');
     let labels = [];
     if(labelEls.length > 0) {
       labelEls.forEach(el => labels.push(el.innerText.trim().toLowerCase()));
     }
     
-    // Pecah judul jadi keyword
     const stopWords = ["dan", "yang", "di", "ke", "dari", "ini", "itu", "untuk", "cara", "tips", "adalah", "video", "terbaru"];
     const keywords = title.toLowerCase().replace(/[^a-z0-9\s]/gi, '').split(' ')
       .filter(w => w.length > 3 && !stopWords.includes(w));
@@ -179,10 +175,7 @@
   }
 
   async function initWidget() {
-    // Validasi Halaman (Hanya muncul di halaman postingan .html)
-    if (!window.location.href.match(/\.html/)) return;
-
-    // Cari Target Suntik
+    if (window.location.pathname === "/" || window.location.pathname === "") return;
     const targetEl = getPostTarget();
     const wrapper = document.getElementById('median-related-wrapper');
     
@@ -191,23 +184,17 @@
       return;
     }
 
-    // Pindahkan Widget (Suntik)
     targetEl.parentNode.insertBefore(wrapper, targetEl.nextSibling);
     wrapper.style.display = "block";
 
     const context = getContext();
 
     try {
-      // Ambil total postingan dulu
       const resTotal = await fetch('/feeds/posts/summary?alt=json&max-results=0');
       const jsonTotal = await resTotal.json();
       const totalPosts = parseInt(jsonTotal.feed.openSearch$totalResults.$t);
-
-      // Tentukan titik acak untuk postingan lama
       const maxIndex = Math.max(1, totalPosts - config.depth);
       const randomIndex = Math.floor(Math.random() * maxIndex) + 1;
-
-      // Fetch PARALEL (Terbaru & Random Lama)
       const [resRecent, resOld] = await Promise.all([
         fetch(`/feeds/posts/summary?alt=json&max-results=${config.depth}`),
         fetch(`/feeds/posts/summary?alt=json&start-index=${randomIndex}&max-results=${config.depth}`)
@@ -215,12 +202,8 @@
 
       const dataRecent = await resRecent.json();
       const dataOld = await resOld.json();
-
-      // Gabung data (cegah duplikat)
       const allEntries = [...(dataRecent.feed.entry || []), ...(dataOld.feed.entry || [])];
-      
       processEntries(allEntries, context);
-
     } catch (e) {
       console.error("median Widget Error:", e);
       document.getElementById('median-content').innerHTML = '<small>Gagal memuat rekomendasi.</small>';
@@ -229,21 +212,22 @@
 
   function processEntries(entries, context) {
     let candidates = [];
-    const currentUrl = window.location.href.split('?')[0];
+    const currentPath = window.location.pathname.replace(/\?.*/, '').replace(/\/$/, ''); 
     const addedLinks = new Set(); 
 
     entries.forEach(entry => {
-      const link = entry.link.find(l => l.rel === 'alternate').href;
-      
-      // Filter: Jangan masukkan postingan yg sedang dibuka atau duplikat
-      if (link.includes(currentUrl) || addedLinks.has(link)) return;
-      addedLinks.add(link);
+      const alternateLink = entry.link.find(l => l.rel === 'alternate');
+      if (!alternateLink) return;
+
+      const fullLink = alternateLink.href;
+      const linkPath = new URL(fullLink).pathname.replace(/\?.*/, '').replace(/\/$/, '');
+
+      if (linkPath === currentPath || addedLinks.has(linkPath)) return;      
+      addedLinks.add(linkPath);
 
       const title = entry.title.$t;
       let score = 0;
       let tagName = 'Arsip';
-  
-      // Cek Label (+5 poin)
       if (entry.category) {
         entry.category.forEach(cat => {
           if (context.labels.includes(cat.term.toLowerCase())) {
@@ -252,33 +236,28 @@
           }
         });
       }
-
-      // Cek Judul (+2 poin per kata)
+	  
       const titleLower = title.toLowerCase();
       context.keywords.forEach(kw => {
         if (titleLower.includes(kw)) score += 2;
       });
 
-      // Ambil Gambar (Resolusi w300 agar tajam & cepat)
       let img = config.noImage;
       if (entry.media$thumbnail) {
         img = entry.media$thumbnail.url.replace(/\/s[0-9]+(\-c)?\//, "/w300-h168-p-k-no-nu/");
     }
 
-      // Masukkan ke kandidat (jika skor > 0 atau random fill)
       candidates.push({
         title: title,
-        link: link,
+        link: fullLink,
         img: img,
         tag: tagName,
         finalScore: score + Math.random() 
       });
     });
 
-    // Urutkan dari skor tertinggi
     candidates.sort((a, b) => b.finalScore - a.finalScore);
 
-    // Ambil top 6
     renderHTML(candidates.slice(0, config.maxPosts));
   }
 
@@ -307,7 +286,6 @@
     container.innerHTML = html;
   }
 
-  // Gunakan 'load' event agar DOM MedianUI sepenuhnya siap
   window.addEventListener('load', initWidget);
 
 })();
