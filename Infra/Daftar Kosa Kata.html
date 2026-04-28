@@ -1,5 +1,4 @@
 <style>
-  /* Desain Glassmorphism & dukungan untuk MedianUI */
   .voc-glass-wrapper {
     position: relative;
     margin: 1.5rem 0;
@@ -27,7 +26,6 @@
     opacity: 0.8;
   }
 
-  /* Banner Total Kata */
   .voc-total-banner {
     background-color: rgba(136, 117, 245, 0.15);
     padding: 12px;
@@ -38,7 +36,6 @@
     font-size: 1.05rem;
   }
 
-  /* Header Kolom (No, Kata, Jumlah) */
   .voc-header {
     display: flex;
     align-items: center;
@@ -62,7 +59,6 @@
     border-radius: 8px;
   }
 
-  /* Mengatur lebar masing-masing kolom agar sejajar */
   .voc-col-no {
     width: 70px;
     font-weight: 600;
@@ -98,21 +94,47 @@
   
   .voc-hidden { display: none !important; }
   
-  /* Loading Spinner */
   .voc-loader {
-    width: 32px; height: 32px;
-    border: 3px solid var(--border-color, rgba(128, 128, 128, 0.2));
-    border-top: 3px solid #8875F5;
-    border-radius: 50%;
-    animation: voc-spin 0.8s linear infinite;
-    margin: 0 auto 10px;
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 10px;
+  animation: voc-spin 2s linear infinite;
+}
+
+.voc-loader circle {
+  stroke: #8875F5;
+  stroke-width: 4;
+  stroke-linecap: round;
+  animation: voc-dash 1.5s ease-in-out infinite;
+}
+
+@keyframes voc-spin {
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes voc-dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
   }
-  @keyframes voc-spin { to { transform: rotate(360deg); } }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
+
 </style>
 
 <div class="voc-glass-wrapper">
   <div id="voc-loading-area">
-    <div class="voc-loader" id="voc-spinner-icon"></div>
+    <svg class="voc-loader" id="voc-spinner-icon" viewBox="0 0 50 50">
+  <circle cx="25" cy="25" r="20" fill="none"></circle>
+</svg>
     <div class="voc-status" id="voc-progress">Memulai analisis arsip...</div>
   </div>
 
@@ -132,12 +154,12 @@
 
 <script>
 (function() {
-  let allWordsMap = {};
+  // let allWordsMap = {}; kode lama ini biarkan saja dulu
+  let allWordsMap = Object.create(null);
   let postsProcessed = 0;
   const startIndex = 1;
   const maxResultsPerPage = 150; 
 
-  // Daftar kata yang diabaikan (Stop Words)
   const stopWords = [
     "postingan", "asli", "tanggal", "publikasikan", "januari", "februari", "maret", "april", "mei", "juni", "juli", "agustus", "september", "oktober", "november", "desember", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"
   ];
@@ -171,6 +193,11 @@
       let spacedHtml = rawHtml.replace(/>/g, '> ');
       const doc = parser.parseFromString(spacedHtml, 'text/html');
       const cleanText = doc.body.textContent || "";
+      
+      
+      // const doc = parser.parseFromString(entry.content.$t, 'text/html');
+      // const cleanText = doc.body.textContent || "";
+      
       const words = cleanText.toLowerCase().match(/\p{L}{3,}/gu);
 
       if (words) {
@@ -184,13 +211,11 @@
   }
 
   function finalize() {
-    // Menghitung Total Semua Kata
     let totalAllWords = 0;
     for (let word in allWordsMap) {
       totalAllWords += allWordsMap[word];
     }
 
-    // Mengurutkan dan mengambil 10000 teratas
     const sorted = Object.entries(allWordsMap)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 20000); 
@@ -199,14 +224,11 @@
     const totalArea = document.getElementById('voc-total-area');
     
     if(sorted.length > 0) {
-      // Menampilkan Total Kata dengan format angka Indonesia (misal: 15.000)
       totalArea.innerHTML = `
         <div class="voc-total-banner">
           <strong>Total Keseluruhan Kata:</strong> ${totalAllWords.toLocaleString('id-ID')}
         </div>
       `;
-
-      // Menambahkan parameter 'index' pada map() untuk penomoran
       output.innerHTML = sorted.map(([word, count], index) => `
         <div class="voc-item">
           <div class="voc-col-no">${index + 1}.</div>
