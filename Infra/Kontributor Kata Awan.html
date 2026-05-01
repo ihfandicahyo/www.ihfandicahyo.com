@@ -1,0 +1,403 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wordcloud2.js/1.2.2/wordcloud2.min.js"></script>
+
+<style>
+ 
+  .voc-glass-wrapper {
+    position: relative;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    border-radius: 12px;
+    background-color: rgba(150, 150, 150, 0.08);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color, rgba(128, 128, 128, 0.2));
+    font-family: var(--font-body, 'Inter', sans-serif);
+  }
+  
+  .voc-title {
+    text-align: center;
+    color: var(--title-color, inherit) !important;
+    margin-bottom: 1rem;
+    font-weight: 700;
+  }
+  
+  .voc-status {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-color, inherit) !important;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+  }
+
+  .voc-total-banner {
+    background-color: rgba(136, 117, 245, 0.15);
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #8875F5;
+    font-size: 1.05rem;
+  }
+
+  .voc-search-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .voc-search-input {
+    width: 100%;
+    max-width: 350px;
+    padding: 12px 20px;
+    border-radius: 30px;
+    border: 1px solid var(--border-color, rgba(128, 128, 128, 0.3));
+    background-color: var(--contentBg, #ffffff);
+    color: var(--contentC, #333333);
+    font-family: inherit;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    text-align: center;
+  }
+
+  .voc-search-input:focus {
+    border-color: #8875F5;
+    box-shadow: 0 0 0 4px rgba(136, 117, 245, 0.15);
+  }
+
+  .voc-search-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .voc-search-result {
+    background-color: rgba(136, 117, 245, 0.1);
+    color: #8875F5;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+  }
+
+  .voc-canvas-container {
+    width: 100%;
+    border-radius: 8px;
+    background-color: rgba(136, 117, 245, 0.1); 
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+  }
+
+  #voc-canvas {
+    display: block;
+    width: 100%;
+    max-width: 1500px; 
+    height: auto;
+    aspect-ratio: 2 / 1;
+    opacity: 0; 
+    transition: opacity 0.8s ease-in-out; 
+    cursor: pointer;
+  }
+  
+  .voc-hidden { display: none !important; opacity: 0 !important; }
+  
+  .voc-loader {
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: 0 auto 10px;
+    animation: voc-spin 2s linear infinite;
+  }
+
+  .voc-loader circle {
+    stroke: #8875F5;
+    stroke-width: 4;
+    stroke-linecap: round;
+    animation: voc-dash 1.5s ease-in-out infinite;
+  }
+
+  @keyframes voc-spin {
+    100% { transform: rotate(360deg); }
+  }
+
+  @keyframes voc-dash {
+    0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; }
+    50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; }
+    100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
+  }
+</style>
+
+<div class="voc-glass-wrapper">
+  <div id="voc-loading-area">
+    <svg class="voc-loader" id="voc-spinner-icon" viewBox="0 0 50 50">
+      <circle cx="25" cy="25" r="20" fill="none"></circle>
+    </svg>
+    <div class="voc-status" id="voc-progress">Memulai analisis arsip...</div>
+  </div>
+
+  <div class="voc-hidden" id="voc-result-area">
+    <h3 class="voc-title">Peta Kosa Kata: FANDI</h3>
+    <div id="voc-total-area"></div> 
+    
+    <div class="voc-search-wrapper">
+      <input type="text" id="voc-search-input" class="voc-search-input" placeholder="Menyiapkan kamus, harap tunggu..." disabled autocomplete="off">
+      <div id="voc-search-result" class="voc-search-result voc-hidden"></div>
+    </div>
+
+    <div class="voc-canvas-container">
+      <canvas id="voc-canvas" width="1500" height="750"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  let allWordsMap = Object.create(null);
+  let postsProcessed = 0;
+  const startIndex = 1;
+  const maxResultsPerPage = 150; 
+
+  const stopWords = [
+    "postingan", "asli", "tanggal", "publikasikan", "januari", "februari", "maret", "april", "mei", "juni", "juli", "agustus", "september", "oktober", "november", "desember", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "2012", "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"
+  ];
+
+  async function fetchAllPosts(index) {
+    const progressEl = document.getElementById('voc-progress');
+    progressEl.textContent = `Menyisir postingan ke-${index} dan seterusnya...`;
+
+    try {
+      const response = await fetch(`/feeds/posts/default?alt=json&start-index=${index}&max-results=${maxResultsPerPage}`);
+      const data = await response.json();
+      const entries = data.feed.entry || [];
+      
+      if (entries.length > 0) {
+        processEntries(entries);
+        postsProcessed += entries.length;
+        await fetchAllPosts(index + entries.length);
+      } else {
+        finalize();
+      }
+    } catch (err) {
+      console.error("Proses terhenti:", err);
+      finalize(); 
+    }
+  }
+
+  function processEntries(entries) {
+    entries.forEach(entry => {
+      const parser = new DOMParser();
+      let rawHtml = entry.content.$t;
+      let spacedHtml = rawHtml.replace(/>/g, '> ');
+      const doc = parser.parseFromString(spacedHtml, 'text/html');
+      const cleanText = doc.body.textContent || "";
+      
+      const words = cleanText.toLowerCase().match(/\p{L}{3,}/gu);
+
+      if (words) {
+        words.forEach(word => {
+          if (!stopWords.includes(word)) {
+            allWordsMap[word] = (allWordsMap[word] || 0) + 1;
+          }
+        });
+      }
+    });
+  }
+
+  function finalize() {
+    let totalAllWords = 0;
+    for (let word in allWordsMap) {
+      totalAllWords += allWordsMap[word];
+    }
+
+    const sorted = Object.entries(allWordsMap)
+      .filter(([w, _]) => w.length > 3)
+      .sort((a, b) => b[1] - a[1]); 
+
+    const topWords = sorted.slice(0, 1000); 
+    const totalArea = document.getElementById('voc-total-area');
+    
+    if(topWords.length > 0 && typeof WordCloud !== 'undefined') {
+      const maxCount = topWords[0][1];
+      const minCount = topWords[topWords.length - 1][1];
+
+      totalArea.innerHTML = `
+        <div class="voc-total-banner">
+          <strong>Total Keseluruhan Kata:</strong> ${totalAllWords.toLocaleString('id-ID')}
+        </div>
+      `;
+
+      const searchInput = document.getElementById('voc-search-input');
+      const searchResult = document.getElementById('voc-search-result');
+
+      const minFontSize = 14;
+      const maxFontSize = 110;
+      
+      let massiveWordList = topWords.map(([word, count]) => {
+        const size = minFontSize + ((count - minCount) / (maxCount - minCount || 1)) * (maxFontSize - minFontSize);
+        return [word.toUpperCase(), size]; 
+      });
+
+      massiveWordList.sort(() => Math.random() - 0.5);
+
+      const canvas = document.getElementById('voc-canvas');
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      
+      let pristineCanvas = null; 
+      let drawnWords = []; 
+
+      const originalFillText = ctx.fillText;
+      ctx.fillText = function(text, x, y) {
+        drawnWords.push({
+          word: text.toLowerCase(),
+          originalText: text,          
+          matrix: this.getTransform(), 
+          font: this.font,             
+          align: this.textAlign,       
+          baseline: this.textBaseline, 
+          x: x,
+          y: y
+        });
+        originalFillText.apply(this, arguments);
+      };
+
+      const svgText = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1500 750'><text x='50%' y='50%' dominant-baseline='central' text-anchor='middle' font-size='420' font-family='Arial, sans-serif' font-weight='900' fill='black' letter-spacing='15'>FANDI</text></svg>`;
+      const img = new Image();
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgText);
+
+      const svgEraser = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1500 750'><text x='50%' y='50%' dominant-baseline='central' text-anchor='middle' font-size='420' font-family='Arial, sans-serif' font-weight='900' fill='black' letter-spacing='15' stroke='black' stroke-width='6'>FANDI</text></svg>`;
+      const imgEraser = new Image();
+      imgEraser.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgEraser);
+      
+      let imagesLoaded = 0;
+      img.onload = checkImages;
+      imgEraser.onload = checkImages;
+
+      function checkImages() {
+        imagesLoaded++;
+        if (imagesLoaded === 2) {
+          
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          document.getElementById('voc-spinner-icon').classList.add('voc-hidden');
+          document.getElementById('voc-progress').textContent = `Mengkalkulasi ruang kanvas...`;
+          document.getElementById('voc-result-area').classList.remove('voc-hidden');
+
+          WordCloud(canvas, {
+            list: massiveWordList,
+            clearCanvas: false, 
+            shape: 'square',
+            gridSize: 6, 
+            weightFactor: 1,        
+            fontFamily: 'Inter, Arial, sans-serif',
+            fontWeight: 'bold',
+            rotateRatio: 0.25,      
+            rotationSteps: 2,       
+            backgroundColor: 'transparent',
+            drawOutOfBound: false,
+            color: getComputedStyle(document.body).getPropertyValue('--title-color').trim() || '#444444',
+            click: function(item) {
+              searchInput.value = item[0];
+              searchInput.dispatchEvent(new Event('input'));
+              window.open('https://www.ihfandicahyo.com/search?q=' + item[0].toLowerCase() + '&m=1', '_blank');
+            }
+          });
+        }
+      }
+
+      canvas.addEventListener('wordcloudstop', function() {
+        if (pristineCanvas !== null) return; 
+
+        ctx.fillText = originalFillText;
+
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.drawImage(imgEraser, 0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = 'source-over'; 
+        
+        pristineCanvas = document.createElement('canvas');
+        pristineCanvas.width = canvas.width;
+        pristineCanvas.height = canvas.height;
+        pristineCanvas.getContext('2d').drawImage(canvas, 0, 0);
+
+        canvas.style.opacity = 1; 
+
+        const progressEl = document.getElementById('voc-progress');
+        progressEl.textContent = `Penyusunan Selesai!`;
+        progressEl.style.color = '#8875F5';
+        progressEl.style.fontWeight = 'bold';
+        
+        searchInput.disabled = false;
+        searchInput.placeholder = "Cari kata spesifik di sini...";
+
+        setTimeout(() => {
+          document.getElementById('voc-loading-area').classList.add('voc-hidden');
+        }, 2000);
+      });
+
+      searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim().toLowerCase();
+
+        if (pristineCanvas) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(pristineCanvas, 0, 0); 
+        }
+
+        if (query === '') {
+          searchResult.classList.add('voc-hidden');
+          searchInput.style.color = 'var(--contentC, #333333)';
+          return;
+        }
+
+        const count = allWordsMap[query] || 0;
+        
+        if (count > 0) {
+          searchInput.style.color = '#8875F5'; 
+          searchResult.innerHTML = `Kosa kata <strong>${query.toUpperCase()}</strong> digunakan sebanyak <strong>${count.toLocaleString('id-ID')}</strong> kali.`;
+          searchResult.classList.remove('voc-hidden');
+          searchResult.style.color = '#8875F5';
+
+          if (pristineCanvas) {
+            drawnWords.forEach(item => {
+              if (item.word === query) {
+                ctx.save();
+                
+                ctx.setTransform(item.matrix); 
+                ctx.font = item.font; 
+                ctx.textAlign = item.align;
+                ctx.textBaseline = item.baseline;
+                
+                ctx.fillStyle = '#8875F5'; 
+                ctx.shadowColor = '#8875F5';
+                ctx.shadowBlur = 8;
+                
+                ctx.fillText(item.originalText, item.x, item.y); 
+                
+                ctx.restore();
+              }
+            });
+
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.drawImage(imgEraser, 0, 0, canvas.width, canvas.height);
+            ctx.globalCompositeOperation = 'source-over';
+          }
+        } else {
+          searchInput.style.color = '#e74c3c'; 
+          searchResult.innerHTML = `Kosa kata <strong>${query.toUpperCase()}</strong> tidak ditemukan.`;
+          searchResult.style.color = '#e74c3c';
+          searchResult.classList.remove('voc-hidden');
+        }
+      });
+
+    } else {
+      totalArea.innerHTML = "<div style='text-align:center;'>Gagal memuat peta kosa kata.</div>";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => fetchAllPosts(startIndex));
+})();
+</script>
