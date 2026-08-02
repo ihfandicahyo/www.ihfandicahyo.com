@@ -7,7 +7,7 @@
 ## 📌 Problem (Masalah)
 * **Proses Manual Memakan Waktu**: Admin keuangan/piutang membutuhkan waktu sekitar **3 hingga 10 menit** setiap kali melakukan rekonsiliasi manual piutang usaha dari ekspor Accurate.
 * **Risiko Human Error**: Proses pemisahan data per penagih/sales, perhitungan ulang umur piutang, penulisan ulang data ke spreadsheet rekap, dan cetak lembar tagihan secara manual sangat rentan terhadap kesalahan input, hilangnya formula, atau salah alokasi kode pelanggan.
-* **Format Data Legacy yang Tidak Konsisten**: File ekspor dari Accurate (`ExportFile.xls`) memiliki posisi header yang bervariasi dan format angka yang tidak seragam (kombinasi pemisah titik/koma lokal & internasional).
+* **Format Data Legacy yang Tidak Konsisten**: File ekspor dari Accurate (`Piutang.xls`) memiliki posisi header yang bervariasi dan format angka yang tidak seragam (kombinasi pemisah titik/koma lokal & internasional).
 
 ---
 
@@ -21,7 +21,7 @@
 ## 💡 Solution (Solusi)
 Pengembangan pipeline otomasi Python 5-langkah bernama **`Ambil AR`** yang mengintegrasikan pembersihan data, penyusunan template Excel berformat resmi, dan sinkronisasi cloud API.
 
-Pipeline ini memangkas durasi pengerjaan dari **3–10 menit menjadi hitungan detik**, di mana pengguna hanya perlu menaruh file `ExportFile.xls` dan menjalankan satu skrip utama (`Ambil AR.py`).
+Pipeline ini memangkas durasi pengerjaan dari **3–10 menit menjadi hitungan detik**, di mana pengguna hanya perlu menaruh file `Piutang.xls` dan menjalankan satu skrip utama (`Ambil AR.py`).
 
 ---
 
@@ -65,7 +65,7 @@ Pipeline ini memangkas durasi pengerjaan dari **3–10 menit menjadi hitungan de
 
 ```
  [ Input ]               [ Processing Pipeline ]                     [ Output ]
- ExportFile.xls ───► [ 1_CleanerAcc.py ]
+ Piutang.xls ───► [ 1_CleanerAcc.py ]
                         │
                      [ 2_FilterAR.py ]
                         │
