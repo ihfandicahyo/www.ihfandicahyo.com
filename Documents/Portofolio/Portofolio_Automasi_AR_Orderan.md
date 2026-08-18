@@ -54,3 +54,6 @@
 **Visualisasi Output pada Google Sheets:**
 - **Nilai Sel Target:** Berisi nominal IDR total Sisa Piutang (misal: `1.234.567`).
 - **Cell Note Hover:** Ringkasan terstruktur memuat *Header Pelanggan*, *Ringkasan Performa Piutang* (Plafon, Rata-rata Bayar, History Hari), serta *Daftar Rincian Faktur Aktif* beserta indikator `(OWING)` dan `(JT DD/MM/YY)`.
+
+[Versi Machine Learning](https://github.com/ACC-TAX-REIGHTEEN/AR-Orderan-MachineLearning)
+
